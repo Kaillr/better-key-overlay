@@ -13,7 +13,7 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 1280,
+    width: 220,
     height: 720,
     show: false,
     autoHideMenuBar: true,
