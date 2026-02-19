@@ -6,26 +6,39 @@ import { type AnalogReport } from './lib/wooting'
 import { keys, getKey } from './lib/pressureStore'
 import { useCps } from './hooks/useCps'
 
+const ipcRenderer = window.electron?.ipcRenderer
+
 function App(): React.JSX.Element {
   const [, forceRender] = useReducer((x: number) => x + 1, 0)
   const { cps, recordPress } = useCps()
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent, pressed: boolean) => {
-      if (pressed && e.repeat) return
-      const key = getKey(e.code)
+    const handleKey = (code: string, pressed: boolean) => {
+      const key = getKey(code)
       if (!key) return
+      if (pressed && key.active) return // ignore repeat
       if (pressed) recordPress()
       key.active = pressed
       forceRender()
     }
-    const onKeyDown = (e: KeyboardEvent) => handleKey(e, true)
-    const onKeyUp = (e: KeyboardEvent) => handleKey(e, false)
-    window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('keyup', onKeyUp)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('keyup', onKeyUp)
+
+    if (ipcRenderer) {
+      // Electron: global keyboard hooks (work without focus)
+      ipcRenderer.on('global-keydown', (_e, code: string) => handleKey(code, true))
+      ipcRenderer.on('global-keyup', (_e, code: string) => handleKey(code, false))
+    } else {
+      // Browser fallback
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.repeat) return
+        handleKey(e.code, true)
+      }
+      const onKeyUp = (e: KeyboardEvent) => handleKey(e.code, false)
+      window.addEventListener('keydown', onKeyDown)
+      window.addEventListener('keyup', onKeyUp)
+      return () => {
+        window.removeEventListener('keydown', onKeyDown)
+        window.removeEventListener('keyup', onKeyUp)
+      }
     }
   }, [recordPress])
 
