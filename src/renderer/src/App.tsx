@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useReducer } from 'react'
-import { ConnectDevice } from './components/ConnectDevice'
-import { PressureCanvas } from './components/PressureCanvas'
-import { KeyPressure } from './components/KeyPressure'
-import { type AnalogReport } from './lib/wooting'
-import { keys, getKey } from './lib/pressureStore'
-import { useCps } from './hooks/useCps'
+import {useCallback, useEffect, useReducer} from 'react'
+import {ConnectDevice} from './components/ConnectDevice'
+import {PressureCanvas} from './components/PressureCanvas'
+import {KeyPressure} from './components/KeyPressure'
+import {type AnalogReport} from './lib/wooting'
+import {getKey, keys} from './lib/pressureStore'
+import {useCps} from './hooks/useCps'
 
 const ipcRenderer = window.electron?.ipcRenderer
 
 function App(): React.JSX.Element {
   const [, forceRender] = useReducer((x: number) => x + 1, 0)
-  const { cps, recordPress } = useCps()
+  const {cps, recordPress} = useCps()
 
   useEffect(() => {
     const handleKey = (code: string, pressed: boolean) => {
@@ -62,19 +62,19 @@ function App(): React.JSX.Element {
   return (
     <div className="h-screen w-screen bg-black flex flex-col items-center">
       <div className="p-4">
-        <ConnectDevice onConnect={onConnect} onDisconnect={onDisconnect} />
+        <ConnectDevice onConnect={onConnect} onDisconnect={onDisconnect}/>
       </div>
 
       <div className="flex-1 flex flex-col items-center w-full min-h-0">
         <div className="text-white font-mono text-sm py-2">
           {cps.toFixed(1)} CPS / {bpm} BPM
         </div>
-        <div className="flex-1 min-h-0" style={{ width: 80 * keys.length + 8 * (keys.length - 1) }}>
-          <PressureCanvas />
+        <div className="flex-1 min-h-0" style={{width: 80 * keys.length + 8 * (keys.length - 1)}}>
+          <PressureCanvas/>
         </div>
         <div className="flex gap-2 pb-4">
           {keys.map((key) => (
-            <KeyPressure key={key.code} label={key.label} active={key.active} />
+            <KeyPressure key={key.code} label={key.label} active={key.active}/>
           ))}
         </div>
       </div>

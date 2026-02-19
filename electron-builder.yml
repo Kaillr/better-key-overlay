@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: key-overlay-advanced
+productName: better-key-overlay
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: key-overlay-advanced
+  executableName: better-key-overlay
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
