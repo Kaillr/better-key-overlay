@@ -2,6 +2,7 @@
 
 html, body {
   background: #000000;
+  overscroll-behavior: none;
 }
 
 ::-webkit-scrollbar {

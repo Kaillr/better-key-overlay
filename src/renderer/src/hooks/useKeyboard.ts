@@ -13,6 +13,7 @@ export function useKeyboard(recordPress: () => void): void {
       if (pressed && key.active) return
       if (pressed) recordPress()
       key.active = pressed
+      key.pressure = pressed ? 1 : 0
       forceRender()
     }
 

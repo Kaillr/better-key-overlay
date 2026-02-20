@@ -7,6 +7,7 @@ import { useCps } from '../hooks/useCps'
 import { useKeyboard } from '../hooks/useKeyboard'
 import { useDevice } from '../hooks/useDevice'
 import { KEY_WIDTH, KEY_GAP } from '../../../shared/config'
+import { defaultSettings } from '../../../shared/defaults'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
@@ -16,22 +17,42 @@ export function OverlayView(): React.JSX.Element {
   const { cps, recordPress } = useCps()
   useKeyboard(recordPress)
 
+  const applySettings = (s: AppSettings): void => {
+    rebuildKeys(s.keys)
+    setSettings(s)
+  }
+
   useEffect(() => {
-    ipcRenderer?.invoke('settings:get').then((s: AppSettings) => {
-      rebuildKeys(s.keys)
-      setSettings(s)
-    })
+    if (ipcRenderer) {
+      ipcRenderer.invoke('settings:get').then(applySettings)
+    } else {
+      try {
+        const stored = localStorage.getItem('settings')
+        applySettings(stored ? JSON.parse(stored) : defaultSettings)
+      } catch {
+        applySettings(defaultSettings)
+      }
+    }
   }, [])
 
   useEffect(() => {
-    if (!ipcRenderer) return
-    const handler = (_e: unknown, s: AppSettings): void => {
-      rebuildKeys(s.keys)
-      setSettings(s)
-    }
-    ipcRenderer.on('config-updated', handler)
-    return () => {
-      ipcRenderer.removeListener('config-updated', handler)
+    if (ipcRenderer) {
+      const handler = (_e: unknown, s: AppSettings): void => applySettings(s)
+      ipcRenderer.on('config-updated', handler)
+      return () => {
+        ipcRenderer.removeListener('config-updated', handler)
+      }
+    } else {
+      const handler = (e: StorageEvent): void => {
+        if (e.key === 'settings') {
+          try {
+            const s = JSON.parse(localStorage.getItem('settings') ?? '')
+            applySettings(s)
+          } catch {}
+        }
+      }
+      window.addEventListener('storage', handler)
+      return () => window.removeEventListener('storage', handler)
     }
   }, [])
 
@@ -60,7 +81,13 @@ export function OverlayView(): React.JSX.Element {
         <p className="text-neutral-500 text-sm text-center">
           No keys configured.
           <br />
-          Right-click to open settings.
+          {ipcRenderer ? (
+            'Right-click to open settings.'
+          ) : (
+            <a href="#/settings" className="text-blue-400 hover:text-blue-300 underline">
+              Open settings
+            </a>
+          )}
         </p>
       </div>
     )
@@ -70,7 +97,15 @@ export function OverlayView(): React.JSX.Element {
   const bpm = ((cps * 60) / 4).toFixed(0)
 
   return (
-    <div className="h-screen w-screen bg-black text-white flex flex-col items-center px-4 overflow-hidden">
+    <div className="h-screen w-screen bg-black text-white flex flex-col items-center px-4 overflow-hidden relative">
+      {!ipcRenderer && (
+        <a
+          href="#/settings"
+          className="absolute top-2 right-2 z-20 text-neutral-600 hover:text-neutral-400 text-xs"
+        >
+          Settings
+        </a>
+      )}
       <div className="flex-1 flex flex-col items-center w-full min-h-0">
         <div className="flex-1 min-h-0" style={{ width: canvasWidth }}>
           <PressureCanvas scrollRate={settings.scrollRate} colors={settings.colors} fade={settings.fade} />

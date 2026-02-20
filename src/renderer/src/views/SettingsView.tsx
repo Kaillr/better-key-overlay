@@ -3,59 +3,156 @@ import { KeyList } from '../components/settings/KeyList'
 import { ColorPicker } from '../components/settings/ColorPicker'
 import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
 import { Section, ItemGroup, ItemRow, ItemSeparator } from '../components/settings/SettingsLayout'
+import { defaultSettings } from '../../../shared/defaults'
+import { deriveLabel, getAnalogKey } from '../../../shared/keyMappings'
+import { WOOT_VID, WOOT_ANALOG_USAGE, initDevice } from '../lib/wooting'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
+const isElectron = !!ipcRenderer
+
+// Browser-only: persist settings in localStorage
+function loadBrowserSettings(): AppSettings {
+  try {
+    const stored = localStorage.getItem('settings')
+    if (stored) return JSON.parse(stored)
+  } catch {}
+  return { ...defaultSettings }
+}
+
+function saveBrowserSettings(settings: AppSettings): void {
+  localStorage.setItem('settings', JSON.stringify(settings))
+  // Notify other windows (overlay) via storage event
+  window.dispatchEvent(new StorageEvent('storage', { key: 'settings' }))
+}
 
 export function SettingsView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [deviceConnected, setDeviceConnected] = useState(false)
 
   useEffect(() => {
-    ipcRenderer?.invoke('settings:get').then(setSettings)
+    if (isElectron) {
+      ipcRenderer!.invoke('settings:get').then(setSettings)
+    } else {
+      setSettings(loadBrowserSettings())
+    }
   }, [])
 
-  const set = useCallback(async (partial: Partial<AppSettings>) => {
-    const updated = await ipcRenderer?.invoke('settings:set', partial)
-    setSettings(updated)
-  }, [])
-
-  const addKey = useCallback(async () => {
-    const updated = await ipcRenderer?.invoke('settings:add-key')
-    setSettings(updated)
-  }, [])
-
-  const removeKey = useCallback(async (index: number) => {
-    await ipcRenderer?.invoke('settings:remove-key', { index })
-    const updated = await ipcRenderer?.invoke('settings:get')
-    setSettings(updated)
-  }, [])
-
-  const recordKey = useCallback(
-    async (index: number, code: string, key: string, uiohookKeycode: number) => {
-      const updated = await ipcRenderer?.invoke('settings:record-key', {
-        index,
-        code,
-        key,
-        uiohookKeycode,
-      })
-      setSettings(updated)
+  const set = useCallback(
+    async (partial: Partial<AppSettings>) => {
+      if (isElectron) {
+        const updated = await ipcRenderer!.invoke('settings:set', partial)
+        setSettings(updated)
+      } else {
+        setSettings((prev) => {
+          const updated = { ...prev!, ...partial }
+          saveBrowserSettings(updated)
+          return updated
+        })
+      }
     },
     []
   )
 
+  const addKey = useCallback(async () => {
+    if (isElectron) {
+      const updated = await ipcRenderer!.invoke('settings:add-key')
+      setSettings(updated)
+    } else {
+      setSettings((prev) => {
+        const updated = {
+          ...prev!,
+          keys: [...prev!.keys, { code: '', label: '', analogKey: 0, uiohookKeycode: 0 }],
+        }
+        saveBrowserSettings(updated)
+        return updated
+      })
+    }
+  }, [])
+
+  const removeKey = useCallback(async (index: number) => {
+    if (isElectron) {
+      await ipcRenderer!.invoke('settings:remove-key', { index })
+      const updated = await ipcRenderer!.invoke('settings:get')
+      setSettings(updated)
+    } else {
+      setSettings((prev) => {
+        const updated = { ...prev!, keys: prev!.keys.filter((_, i) => i !== index) }
+        saveBrowserSettings(updated)
+        return updated
+      })
+    }
+  }, [])
+
+  const recordKey = useCallback(
+    async (index: number, code: string, key: string, uiohookKeycode: number) => {
+      if (isElectron) {
+        const updated = await ipcRenderer!.invoke('settings:record-key', {
+          index,
+          code,
+          key,
+          uiohookKeycode,
+        })
+        setSettings(updated)
+      } else {
+        setSettings((prev) => {
+          const keys = [...prev!.keys]
+          keys[index] = {
+            ...keys[index],
+            code,
+            label: deriveLabel(code),
+            analogKey: getAnalogKey(code),
+            uiohookKeycode: 0,
+          }
+          const updated = { ...prev!, keys }
+          saveBrowserSettings(updated)
+          return updated
+        })
+      }
+    },
+    []
+  )
+
+  const connectDevice = useCallback(async () => {
+    if (!navigator.hid) return
+    const devices = await navigator.hid.requestDevice({
+      filters: [{ vendorId: WOOT_VID, usagePage: WOOT_ANALOG_USAGE }],
+    })
+    if (devices.length > 0) {
+      await initDevice(devices[0])
+      setDeviceConnected(true)
+    }
+  }, [])
+
+  // Check if device is already connected
+  useEffect(() => {
+    if (!navigator.hid) return
+    navigator.hid.getDevices().then((devices) => {
+      const woot = devices.find(
+        (d) => d.vendorId === WOOT_VID && d.collections[0]?.usagePage === WOOT_ANALOG_USAGE
+      )
+      if (woot) setDeviceConnected(true)
+    })
+  }, [])
+
   if (!settings) return <div className="h-screen bg-neutral-900" />
+
+  const showDeviceSection = !isElectron && !!navigator.hid
 
   return (
     <div className="pt-6 pb-6 pl-6 pr-2 bg-neutral-900 text-white min-h-screen">
       <div className="max-w-xl mx-auto flex flex-col gap-8">
-        <h1 className="text-2xl font-semibold">Settings</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Settings</h1>
+          {!isElectron && (
+            <a href="#/" className="text-sm text-neutral-500 hover:text-neutral-300">
+              Back
+            </a>
+          )}
+        </div>
 
         <Section title="Keys">
-          <KeyList
-            keys={settings.keys}
-            onRemove={removeKey}
-            onRecord={recordKey}
-          />
+          <KeyList keys={settings.keys} onRemove={removeKey} onRecord={recordKey} />
           <button
             onClick={addKey}
             className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm w-full"
@@ -64,18 +161,27 @@ export function SettingsView(): React.JSX.Element {
           </button>
         </Section>
 
+        {showDeviceSection && (
+          <Section title="Device">
+            <ItemGroup>
+              <ItemRow label="Wooting analog" description={deviceConnected ? 'Connected' : 'Not connected'}>
+                <button
+                  onClick={connectDevice}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-neutral-600 hover:border-neutral-500 bg-neutral-800"
+                >
+                  {deviceConnected ? 'Reconnect' : 'Connect'}
+                </button>
+              </ItemRow>
+            </ItemGroup>
+          </Section>
+        )}
+
         <Section title="Key Style">
-          <KeyStyleEditor
-            keyStyle={settings.keyStyle}
-            onChange={(keyStyle) => set({ keyStyle })}
-          />
+          <KeyStyleEditor keyStyle={settings.keyStyle} onChange={(keyStyle) => set({ keyStyle })} />
         </Section>
 
         <Section title="Pressure Colors">
-          <ColorPicker
-            colors={settings.colors}
-            onChange={(colors) => set({ colors })}
-          />
+          <ColorPicker colors={settings.colors} onChange={(colors) => set({ colors })} />
         </Section>
 
         <Section title="Scroll">
@@ -90,7 +196,9 @@ export function SettingsView(): React.JSX.Element {
                 onChange={(e) => set({ scrollRate: Number(e.target.value) })}
                 className="w-24"
               />
-              <span className="text-xs text-neutral-500 w-14 text-right">{settings.scrollRate} px/s</span>
+              <span className="text-xs text-neutral-500 w-14 text-right">
+                {settings.scrollRate} px/s
+              </span>
             </ItemRow>
             <ItemSeparator />
             <ItemRow label="Fade out at top">
@@ -111,10 +219,14 @@ export function SettingsView(): React.JSX.Element {
                     max={100}
                     step={5}
                     value={settings.fade.height}
-                    onChange={(e) => set({ fade: { ...settings.fade, height: Number(e.target.value) } })}
+                    onChange={(e) =>
+                      set({ fade: { ...settings.fade, height: Number(e.target.value) } })
+                    }
                     className="w-24"
                   />
-                  <span className="text-xs text-neutral-500 w-10 text-right">{settings.fade.height}%</span>
+                  <span className="text-xs text-neutral-500 w-10 text-right">
+                    {settings.fade.height}%
+                  </span>
                 </ItemRow>
               </>
             )}
@@ -123,19 +235,25 @@ export function SettingsView(): React.JSX.Element {
 
         <Section title="Display">
           <ItemGroup>
-            <ItemRow label="Window height">
-              <input
-                type="range"
-                min={200}
-                max={1200}
-                step={10}
-                value={settings.windowHeight}
-                onChange={(e) => set({ windowHeight: Number(e.target.value) })}
-                className="w-24"
-              />
-              <span className="text-xs text-neutral-500 w-12 text-right">{settings.windowHeight}px</span>
-            </ItemRow>
-            <ItemSeparator />
+            {isElectron && (
+              <>
+                <ItemRow label="Window height">
+                  <input
+                    type="range"
+                    min={200}
+                    max={1200}
+                    step={10}
+                    value={settings.windowHeight}
+                    onChange={(e) => set({ windowHeight: Number(e.target.value) })}
+                    className="w-24"
+                  />
+                  <span className="text-xs text-neutral-500 w-12 text-right">
+                    {settings.windowHeight}px
+                  </span>
+                </ItemRow>
+                <ItemSeparator />
+              </>
+            )}
             <ItemRow label="Show CPS">
               <input
                 type="checkbox"
