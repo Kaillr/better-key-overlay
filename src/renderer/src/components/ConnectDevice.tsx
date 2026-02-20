@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { WOOT_VID, WOOT_ANALOG_USAGE, initDevice } from '../lib/wooting'
 
 interface ConnectDeviceProps {
@@ -6,14 +6,13 @@ interface ConnectDeviceProps {
   onDisconnect: () => void
 }
 
-let hasDoneInit = false
-
 export function ConnectDevice({ onConnect, onDisconnect }: ConnectDeviceProps) {
   const [device, setDevice] = useState<HIDDevice | null>(null)
+  const initRef = useRef(false)
 
   useEffect(() => {
-    if (hasDoneInit) return
-    hasDoneInit = true
+    if (initRef.current) return
+    initRef.current = true
 
     navigator.hid.getDevices().then(async (devices) => {
       const wootDevice = devices.find(

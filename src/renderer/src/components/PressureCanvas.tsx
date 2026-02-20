@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { keys } from '../lib/pressureStore'
-
-const COL_WIDTH = 80
-const GAP = 8
+import { KEY_WIDTH, KEY_GAP } from '../../../shared/config'
 
 function pressureToColor(pressure: number, active: boolean): string {
   if (pressure === 0) return 'transparent'
@@ -18,7 +16,7 @@ export function PressureCanvas() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const canvasWidth = COL_WIDTH * keys.length + GAP * (keys.length - 1)
+    const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
     const ctx = canvas.getContext('2d')!
     let rafId: number
 
@@ -41,9 +39,9 @@ export function PressureCanvas() {
       ctx.clearRect(0, h - 1, canvasWidth, 1)
 
       keys.forEach((key, i) => {
-        const xOffset = i * (COL_WIDTH + GAP)
+        const xOffset = i * (KEY_WIDTH + KEY_GAP)
         ctx.fillStyle = pressureToColor(key.pressure, key.active)
-        ctx.fillRect(xOffset, h - 1, COL_WIDTH, 1)
+        ctx.fillRect(xOffset, h - 1, KEY_WIDTH, 1)
       })
 
       rafId = requestAnimationFrame(draw)

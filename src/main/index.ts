@@ -2,24 +2,22 @@ import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { uIOhook, UiohookKey } from 'uiohook-napi'
+import { contentWidth, KEY_CONFIGS } from '../shared/config'
 
-// Map uiohook keycodes to DOM key codes
+// Map uiohook keycodes to DOM codes for configured keys
 const UIOHOOK_TO_DOM: Record<number, string> = {
   [UiohookKey.Z]: 'KeyZ',
   [UiohookKey.X]: 'KeyX',
 }
 
-const KEY_WIDTH = 80
-const KEY_GAP = 8
-const KEY_COUNT = 2
-const PADDING = 32
-const WINDOW_WIDTH = KEY_WIDTH * KEY_COUNT + KEY_GAP * (KEY_COUNT - 1) + PADDING
+// Filter to only forward keys that are in the config
+const trackedCodes = new Set(KEY_CONFIGS.map((k) => k.code))
 
 let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: WINDOW_WIDTH,
+    width: contentWidth(),
     height: 720,
     resizable: false,
     useContentSize: true,
@@ -76,14 +74,14 @@ app.whenReady().then(() => {
 
   uIOhook.on('keydown', (e) => {
     const code = UIOHOOK_TO_DOM[e.keycode]
-    if (code && mainWindow) {
+    if (code && trackedCodes.has(code) && mainWindow) {
       mainWindow.webContents.send('global-keydown', code)
     }
   })
 
   uIOhook.on('keyup', (e) => {
     const code = UIOHOOK_TO_DOM[e.keycode]
-    if (code && mainWindow) {
+    if (code && trackedCodes.has(code) && mainWindow) {
       mainWindow.webContents.send('global-keyup', code)
     }
   })

@@ -1,46 +1,16 @@
-import {useCallback, useEffect, useReducer} from 'react'
-import {ConnectDevice} from './components/ConnectDevice'
-import {PressureCanvas} from './components/PressureCanvas'
-import {KeyPressure} from './components/KeyPressure'
-import {type AnalogReport} from './lib/wooting'
-import {getKey, keys} from './lib/pressureStore'
-import {useCps} from './hooks/useCps'
-
-const ipcRenderer = window.electron?.ipcRenderer
+import { useCallback } from 'react'
+import { ConnectDevice } from './components/ConnectDevice'
+import { PressureCanvas } from './components/PressureCanvas'
+import { KeyPressure } from './components/KeyPressure'
+import { type AnalogReport } from './lib/wooting'
+import { keys } from './lib/pressureStore'
+import { useCps } from './hooks/useCps'
+import { useKeyboard } from './hooks/useKeyboard'
+import { KEY_WIDTH, KEY_GAP } from '../../shared/config'
 
 function App(): React.JSX.Element {
-  const [, forceRender] = useReducer((x: number) => x + 1, 0)
-  const {cps, recordPress} = useCps()
-
-  useEffect(() => {
-    const handleKey = (code: string, pressed: boolean) => {
-      const key = getKey(code)
-      if (!key) return
-      if (pressed && key.active) return // ignore repeat
-      if (pressed) recordPress()
-      key.active = pressed
-      forceRender()
-    }
-
-    if (ipcRenderer) {
-      // Electron: global keyboard hooks (work without focus)
-      ipcRenderer.on('global-keydown', (_e, code: string) => handleKey(code, true))
-      ipcRenderer.on('global-keyup', (_e, code: string) => handleKey(code, false))
-    } else {
-      // Browser fallback
-      const onKeyDown = (e: KeyboardEvent) => {
-        if (e.repeat) return
-        handleKey(e.code, true)
-      }
-      const onKeyUp = (e: KeyboardEvent) => handleKey(e.code, false)
-      window.addEventListener('keydown', onKeyDown)
-      window.addEventListener('keyup', onKeyUp)
-      return () => {
-        window.removeEventListener('keydown', onKeyDown)
-        window.removeEventListener('keyup', onKeyUp)
-      }
-    }
-  }, [recordPress])
+  const { cps, recordPress } = useCps()
+  useKeyboard(recordPress)
 
   const onConnect = useCallback((dev: HIDDevice) => {
     dev.onanalogreport = (report: AnalogReport) => {
@@ -58,23 +28,24 @@ function App(): React.JSX.Element {
   }, [])
 
   const bpm = (cps * 60 / 4).toFixed(0)
+  const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
 
   return (
     <div className="h-screen w-screen bg-black flex flex-col items-center px-4">
       <div className="p-4">
-        <ConnectDevice onConnect={onConnect} onDisconnect={onDisconnect}/>
+        <ConnectDevice onConnect={onConnect} onDisconnect={onDisconnect} />
       </div>
 
       <div className="flex-1 flex flex-col items-center w-full min-h-0">
         <div className="text-white font-mono text-sm py-2">
           {cps.toFixed(1)} CPS / {bpm} BPM
         </div>
-        <div className="flex-1 min-h-0" style={{width: 80 * keys.length + 8 * (keys.length - 1)}}>
-          <PressureCanvas/>
+        <div className="flex-1 min-h-0" style={{ width: canvasWidth }}>
+          <PressureCanvas />
         </div>
-        <div className="flex gap-2 pb-4">
+        <div className="flex pb-4" style={{ gap: KEY_GAP }}>
           {keys.map((key) => (
-            <KeyPressure key={key.code} label={key.label} active={key.active}/>
+            <KeyPressure key={key.code} label={key.label} active={key.active} />
           ))}
         </div>
       </div>
