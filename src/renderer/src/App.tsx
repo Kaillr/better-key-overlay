@@ -38,7 +38,7 @@ function App(): React.JSX.Element {
         <div className="flex-1 min-h-0" style={{ width: canvasWidth }}>
           <PressureCanvas />
         </div>
-        <div className="flex pt-2" style={{ gap: KEY_GAP }}>
+        <div className="flex" style={{ gap: KEY_GAP }}>
           {keys.map((key) => (
             <KeyPressure key={key.code} label={key.label} active={key.active} />
           ))}

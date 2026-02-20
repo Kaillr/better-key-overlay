@@ -19,6 +19,10 @@ export function PressureCanvas() {
     const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
     const ctx = canvas.getContext('2d')!
     let rafId: number
+    let lastTime = 0
+    let accumulator = 0
+    const SCROLL_RATE = 400 // pixels per second
+    const STEP = 1 / SCROLL_RATE
 
     const resize = () => {
       canvas.width = canvasWidth
@@ -29,20 +33,28 @@ export function PressureCanvas() {
     const observer = new ResizeObserver(resize)
     observer.observe(canvas.parentElement!)
 
-    const draw = () => {
+    const draw = (time: number) => {
+      const dt = lastTime === 0 ? 0 : (time - lastTime) / 1000
+      lastTime = time
+      accumulator += dt
+
       const h = canvas.height
 
-      ctx.globalCompositeOperation = 'copy'
-      ctx.drawImage(canvas, 0, -1)
-      ctx.globalCompositeOperation = 'source-over'
+      while (accumulator >= STEP) {
+        accumulator -= STEP
 
-      ctx.clearRect(0, h - 1, canvasWidth, 1)
+        ctx.globalCompositeOperation = 'copy'
+        ctx.drawImage(canvas, 0, -1)
+        ctx.globalCompositeOperation = 'source-over'
 
-      keys.forEach((key, i) => {
-        const xOffset = i * (KEY_WIDTH + KEY_GAP)
-        ctx.fillStyle = pressureToColor(key.pressure, key.active)
-        ctx.fillRect(xOffset, h - 1, KEY_WIDTH, 1)
-      })
+        ctx.clearRect(0, h - 1, canvasWidth, 1)
+
+        keys.forEach((key, i) => {
+          const xOffset = i * (KEY_WIDTH + KEY_GAP)
+          ctx.fillStyle = pressureToColor(key.pressure, key.active)
+          ctx.fillRect(xOffset, h - 1, KEY_WIDTH, 1)
+        })
+      }
 
       rafId = requestAnimationFrame(draw)
     }
