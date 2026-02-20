@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, Menu, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { autoUpdater } from 'electron-updater'
 import { uIOhook } from 'uiohook-napi'
 import { contentWidth } from '../shared/config'
 import { store } from './store'
@@ -96,7 +97,9 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.kaillr.better-key-overlay')
+
+  autoUpdater.checkForUpdatesAndNotify()
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
