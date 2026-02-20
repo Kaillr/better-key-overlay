@@ -5,7 +5,7 @@ import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
 import { Section, ItemGroup, ItemRow, ItemSeparator } from '../components/settings/SettingsLayout'
 import { defaultSettings } from '../../../shared/defaults'
 import { deriveLabel, getAnalogKey } from '../../../shared/keyMappings'
-import { WOOT_VID, WOOT_ANALOG_USAGE, initDevice } from '../lib/wooting'
+import { useDevice } from '../hooks/useDevice'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
@@ -28,7 +28,7 @@ function saveBrowserSettings(settings: AppSettings): void {
 
 export function SettingsView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const [deviceConnected, setDeviceConnected] = useState(false)
+  const { devices: connectedDevices, requestDevice } = useDevice(() => {}, () => {})
 
   useEffect(() => {
     if (isElectron) {
@@ -113,31 +113,7 @@ export function SettingsView(): React.JSX.Element {
     []
   )
 
-  const connectDevice = useCallback(async () => {
-    if (!navigator.hid) return
-    const devices = await navigator.hid.requestDevice({
-      filters: [{ vendorId: WOOT_VID, usagePage: WOOT_ANALOG_USAGE }],
-    })
-    if (devices.length > 0) {
-      await initDevice(devices[0])
-      setDeviceConnected(true)
-    }
-  }, [])
-
-  // Check if device is already connected
-  useEffect(() => {
-    if (!navigator.hid) return
-    navigator.hid.getDevices().then((devices) => {
-      const woot = devices.find(
-        (d) => d.vendorId === WOOT_VID && d.collections[0]?.usagePage === WOOT_ANALOG_USAGE
-      )
-      if (woot) setDeviceConnected(true)
-    })
-  }, [])
-
   if (!settings) return <div className="h-screen bg-neutral-900" />
-
-  const showDeviceSection = !isElectron && !!navigator.hid
 
   return (
     <div className="pt-6 pb-6 pl-6 pr-2 bg-neutral-900 text-white min-h-screen">
@@ -161,15 +137,22 @@ export function SettingsView(): React.JSX.Element {
           </button>
         </Section>
 
-        {showDeviceSection && (
+        {requestDevice && (
           <Section title="Device">
             <ItemGroup>
-              <ItemRow label="Wooting analog" description={deviceConnected ? 'Connected' : 'Not connected'}>
+              <ItemRow
+                label="Wooting analog"
+                description={
+                  connectedDevices.length > 0
+                    ? `${connectedDevices.length} device${connectedDevices.length > 1 ? 's' : ''} connected`
+                    : 'Not connected'
+                }
+              >
                 <button
-                  onClick={connectDevice}
+                  onClick={requestDevice}
                   className="px-3 py-1.5 text-xs rounded-lg border border-neutral-600 hover:border-neutral-500 bg-neutral-800"
                 >
-                  {deviceConnected ? 'Reconnect' : 'Connect'}
+                  {connectedDevices.length > 0 ? 'Add Device' : 'Connect'}
                 </button>
               </ItemRow>
             </ItemGroup>
