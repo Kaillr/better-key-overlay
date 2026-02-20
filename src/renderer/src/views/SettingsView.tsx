@@ -161,7 +161,8 @@ export function SettingsView(): React.JSX.Element {
           <KeyList keys={settings.keys} onRemove={removeKey} onRecord={recordKey} />
           <button
             onClick={addKey}
-            className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm w-full"
+            disabled={settings.keys.some((k) => !k.code)}
+            className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm w-full"
           >
             Add Key
           </button>

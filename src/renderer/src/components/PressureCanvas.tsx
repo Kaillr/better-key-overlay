@@ -53,7 +53,7 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
       ctx.clearRect(0, y, canvasWidth, 1)
       keys.forEach((key, i) => {
         const xOffset = i * (KEY_WIDTH + KEY_GAP)
-        const pressure = key.pressure > 0 ? key.pressure : key.active ? 1 : 0
+        const pressure = key.analogPressure > 0 ? key.analogPressure : key.active ? 1 : 0
         if (pressure === 0) return
         const kc = key.colors ?? c
         if (kc.gradient) {

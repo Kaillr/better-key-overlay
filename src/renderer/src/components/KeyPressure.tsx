@@ -34,7 +34,7 @@ export function KeyPressure({ keyState, keyStyle }: KeyPressureProps) {
       const el = elRef.current
       if (el) {
         const state = keyState.active ? keyStyle.active : keyStyle.inactive
-        const p = keyState.pressure > 0 ? keyState.pressure : keyState.active ? 1 : 0
+        const p = keyState.analogPressure > 0 ? keyState.analogPressure : keyState.active ? 1 : 0
         el.style.borderColor = resolve(state.borderColor, state.borderColorGradient, p)
         el.style.backgroundColor = resolve(state.backgroundColor, state.backgroundColorGradient, p)
         el.style.color = resolve(state.textColor, state.textColorGradient, p)

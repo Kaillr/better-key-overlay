@@ -13,6 +13,18 @@ interface KeyListProps {
 export function KeyList({ keys, onRemove, onRecord }: KeyListProps) {
   const [recordingIndex, setRecordingIndex] = useState<number | null>(null)
   const captureRef = useRef<Promise<number> | null>(null)
+  const prevLengthRef = useRef(keys.length)
+
+  // Auto-start recording when a new unassigned key is added
+  useEffect(() => {
+    if (keys.length > prevLengthRef.current) {
+      const lastIndex = keys.length - 1
+      if (!keys[lastIndex].code) {
+        startRecording(lastIndex)
+      }
+    }
+    prevLengthRef.current = keys.length
+  }, [keys.length])
 
   const startRecording = (index: number) => {
     captureRef.current = ipcRenderer?.invoke('settings:capture-key') as Promise<number>

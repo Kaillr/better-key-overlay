@@ -59,15 +59,15 @@ export function OverlayView(): React.JSX.Element {
   const onConnect = useCallback((dev: HIDDevice) => {
     dev.onanalogreport = (report: AnalogReport) => {
       for (const key of keys) {
-        const val = report.data.find((k) => k.key === key.analogKey)?.value
-        key.pressure = val ?? 0
+        const val = report.data.find((k) => k.key === key.analogKey)?.value ?? 0
+        key.analogPressure = val
       }
     }
   }, [])
 
   const onDisconnect = useCallback(() => {
     for (const key of keys) {
-      key.pressure = 0
+      key.analogPressure = 0
     }
   }, [])
 
