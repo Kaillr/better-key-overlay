@@ -46,7 +46,7 @@ export function SettingsView(): React.JSX.Element {
   if (!settings) return <div className="h-screen bg-neutral-900" />
 
   return (
-    <div className="p-6 md:p-8 bg-neutral-900 text-white min-h-screen">
+    <div className="p-6 bg-neutral-900 text-white min-h-screen">
       <div className="max-w-xl mx-auto flex flex-col gap-8">
         <h1 className="text-2xl font-semibold">Settings</h1>
 
