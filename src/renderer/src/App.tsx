@@ -60,7 +60,7 @@ function App(): React.JSX.Element {
   const bpm = (cps * 60 / 4).toFixed(0)
 
   return (
-    <div className="h-screen w-screen bg-black flex flex-col items-center">
+    <div className="h-screen w-screen bg-black flex flex-col items-center px-4">
       <div className="p-4">
         <ConnectDevice onConnect={onConnect} onDisconnect={onDisconnect}/>
       </div>

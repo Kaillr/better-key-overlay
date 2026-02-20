@@ -9,12 +9,20 @@ const UIOHOOK_TO_DOM: Record<number, string> = {
   [UiohookKey.X]: 'KeyX',
 }
 
+const KEY_WIDTH = 80
+const KEY_GAP = 8
+const KEY_COUNT = 2
+const PADDING = 32
+const WINDOW_WIDTH = KEY_WIDTH * KEY_COUNT + KEY_GAP * (KEY_COUNT - 1) + PADDING
+
 let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 220,
+    width: WINDOW_WIDTH,
     height: 720,
+    resizable: false,
+    useContentSize: true,
     show: false,
     autoHideMenuBar: true,
     webPreferences: {
