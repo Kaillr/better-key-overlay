@@ -32,7 +32,7 @@ export interface KeyStyle {
 
 export interface FadeConfig {
   enabled: boolean
-  height: number // pixels from top
+  height: number // percentage of canvas height (0-100)
 }
 
 export interface AppSettings {

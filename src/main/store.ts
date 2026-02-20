@@ -35,7 +35,7 @@ const defaults: AppSettings = {
   },
   fade: {
     enabled: true,
-    height: 200,
+    height: 50,
   },
   windowHeight: 720,
 }

@@ -107,14 +107,14 @@ export function SettingsView(): React.JSX.Element {
                 <ItemRow label="Fade height">
                   <input
                     type="range"
-                    min={50}
-                    max={500}
-                    step={10}
+                    min={5}
+                    max={100}
+                    step={5}
                     value={settings.fade.height}
                     onChange={(e) => set({ fade: { ...settings.fade, height: Number(e.target.value) } })}
                     className="w-24"
                   />
-                  <span className="text-xs text-neutral-500 w-10 text-right">{settings.fade.height}px</span>
+                  <span className="text-xs text-neutral-500 w-10 text-right">{settings.fade.height}%</span>
                 </ItemRow>
               </>
             )}
