@@ -5,7 +5,7 @@ import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
 import { Section, ItemGroup, ItemRow, ItemSeparator } from '../components/settings/SettingsLayout'
 import { defaultSettings } from '../../../shared/defaults'
 import { deriveLabel, getAnalogKey } from '../../../shared/keyMappings'
-import { useDevice } from '../hooks/useDevice'
+import { WOOT_VID, WOOT_ANALOG_USAGE } from '../lib/wooting'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
@@ -28,7 +28,23 @@ function saveBrowserSettings(settings: AppSettings): void {
 
 export function SettingsView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const { devices: connectedDevices, requestDevice } = useDevice(() => {}, () => {})
+  const [connectedDevices, setConnectedDevices] = useState<HIDDevice[]>([])
+
+  useEffect(() => {
+    if (!navigator.hid) return
+    const refresh = () => {
+      navigator.hid.getDevices().then((devices) => {
+        setConnectedDevices(
+          devices.filter(
+            (d) => d.vendorId === WOOT_VID && d.collections[0]?.usagePage === WOOT_ANALOG_USAGE
+          )
+        )
+      })
+    }
+    refresh()
+    const interval = setInterval(refresh, 2000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     if (isElectron) {
@@ -113,6 +129,20 @@ export function SettingsView(): React.JSX.Element {
     []
   )
 
+  const connectDevice = useCallback(async () => {
+    if (!navigator.hid) return
+    await navigator.hid.requestDevice({
+      filters: [{ vendorId: WOOT_VID, usagePage: WOOT_ANALOG_USAGE }],
+    })
+    // Refresh the list
+    const devices = await navigator.hid.getDevices()
+    setConnectedDevices(
+      devices.filter(
+        (d) => d.vendorId === WOOT_VID && d.collections[0]?.usagePage === WOOT_ANALOG_USAGE
+      )
+    )
+  }, [])
+
   if (!settings) return <div className="h-screen bg-neutral-900" />
 
   return (
@@ -137,27 +167,33 @@ export function SettingsView(): React.JSX.Element {
           </button>
         </Section>
 
-        {requestDevice && (
-          <Section title="Device">
-            <ItemGroup>
-              <ItemRow
-                label="Wooting analog"
-                description={
-                  connectedDevices.length > 0
-                    ? `${connectedDevices.length} device${connectedDevices.length > 1 ? 's' : ''} connected`
-                    : 'Not connected'
-                }
-              >
-                <button
-                  onClick={requestDevice}
-                  className="px-3 py-1.5 text-xs rounded-lg border border-neutral-600 hover:border-neutral-500 bg-neutral-800"
-                >
-                  {connectedDevices.length > 0 ? 'Add Device' : 'Connect'}
-                </button>
-              </ItemRow>
-            </ItemGroup>
-          </Section>
-        )}
+        <Section title="Device">
+          <ItemGroup>
+            {connectedDevices.length > 0 ? (
+              connectedDevices.map((dev, i) => (
+                <div key={i}>
+                  {i > 0 && <ItemSeparator />}
+                  <ItemRow label={dev.productName || 'Unknown device'} description="Connected" />
+                </div>
+              ))
+            ) : (
+              <ItemRow label="No devices connected" />
+            )}
+            {!isElectron && navigator.hid && (
+              <>
+                <ItemSeparator />
+                <ItemRow label="Add device">
+                  <button
+                    onClick={connectDevice}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-neutral-600 hover:border-neutral-500 bg-neutral-800"
+                  >
+                    Connect
+                  </button>
+                </ItemRow>
+              </>
+            )}
+          </ItemGroup>
+        </Section>
 
         <Section title="Key Style">
           <KeyStyleEditor keyStyle={settings.keyStyle} onChange={(keyStyle) => set({ keyStyle })} />

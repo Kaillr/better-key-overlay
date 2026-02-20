@@ -29,7 +29,7 @@ export function ItemSeparator() {
 interface ItemRowProps {
   label: string
   description?: string
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 export function ItemRow({ label, description, children }: ItemRowProps) {
