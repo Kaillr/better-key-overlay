@@ -1,31 +1,39 @@
 import { useEffect, useRef } from 'react'
 import { keys } from '../lib/pressureStore'
+import { lerpColor } from '../lib/color'
 import { KEY_WIDTH, KEY_GAP } from '../../../shared/config'
+import type { ColorConfig } from '../../../shared/types'
 
-function pressureToColor(pressure: number, active: boolean): string {
-  if (pressure === 0) return 'transparent'
-  const hue = pressure * 120
-  const alpha = active ? 0.5 + pressure * 0.5 : pressure
-  return `hsla(${hue}, 100%, 50%, ${alpha})`
+interface PressureCanvasProps {
+  scrollRate: number
+  colors: ColorConfig
 }
 
-export function PressureCanvas() {
+export function PressureCanvas({ scrollRate, colors }: PressureCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const scrollRateRef = useRef(scrollRate)
+  const colorsRef = useRef(colors)
+
+  useEffect(() => {
+    scrollRateRef.current = scrollRate
+  }, [scrollRate])
+
+  useEffect(() => {
+    colorsRef.current = colors
+  }, [colors])
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
     const ctx = canvas.getContext('2d')!
     let rafId: number
     let lastTime = 0
     let accumulator = 0
-    const SCROLL_RATE = 400 // pixels per second
-    const STEP = 1 / SCROLL_RATE
 
     const resize = () => {
-      canvas.width = canvasWidth
+      const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
+      canvas.width = canvasWidth || 1
       canvas.height = canvas.parentElement?.clientHeight ?? window.innerHeight
     }
     resize()
@@ -38,10 +46,13 @@ export function PressureCanvas() {
       lastTime = time
       accumulator += dt
 
+      const step = 1 / scrollRateRef.current
       const h = canvas.height
+      const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
+      const c = colorsRef.current
 
-      while (accumulator >= STEP) {
-        accumulator -= STEP
+      while (accumulator >= step) {
+        accumulator -= step
 
         ctx.globalCompositeOperation = 'copy'
         ctx.drawImage(canvas, 0, -1)
@@ -51,7 +62,10 @@ export function PressureCanvas() {
 
         keys.forEach((key, i) => {
           const xOffset = i * (KEY_WIDTH + KEY_GAP)
-          ctx.fillStyle = pressureToColor(key.pressure, key.active)
+          if (key.pressure === 0) return
+          const start = key.active ? c.activeStartColor : c.inactiveStartColor
+          const end = key.active ? c.activeEndColor : c.inactiveEndColor
+          ctx.fillStyle = lerpColor(start, end, key.pressure)
           ctx.fillRect(xOffset, h - 1, KEY_WIDTH, 1)
         })
       }

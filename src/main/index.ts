@@ -1,23 +1,42 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, Menu, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { uIOhook, UiohookKey } from 'uiohook-napi'
-import { contentWidth, KEY_CONFIGS } from '../shared/config'
-
-// Map uiohook keycodes to DOM codes for configured keys
-const UIOHOOK_TO_DOM: Record<number, string> = {
-  [UiohookKey.Z]: 'KeyZ',
-  [UiohookKey.X]: 'KeyX',
-}
-
-// Filter to only forward keys that are in the config
-const trackedCodes = new Set(KEY_CONFIGS.map((k) => k.code))
+import { uIOhook } from 'uiohook-napi'
+import { contentWidth } from '../shared/config'
+import { store } from './store'
+import { registerIpcHandlers } from './ipc'
+import { createTray } from './tray'
+import { openSettingsWindow } from './settingsWindow'
+import type { AppSettings } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
 
+// Dynamic uiohook tracking: uiohook keycode → DOM code
+const uiohookMap = new Map<number, string>()
+
+// Whether we're capturing the next keypress for key detection
+let captureNextKey: ((keycode: number) => void) | null = null
+
+function rebuildTracking(settings: AppSettings): void {
+  uiohookMap.clear()
+  for (const key of settings.keys) {
+    if (key.uiohookKeycode > 0) {
+      uiohookMap.set(key.uiohookKeycode, key.code)
+    }
+  }
+}
+
+function onConfigChanged(settings: AppSettings): void {
+  rebuildTracking(settings)
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setContentSize(contentWidth(settings.keys.length), 720)
+  }
+}
+
 function createWindow(): void {
+  const keys = store.get('keys')
   mainWindow = new BrowserWindow({
-    width: contentWidth(),
+    width: contentWidth(keys.length),
     height: 720,
     resizable: false,
     useContentSize: true,
@@ -25,8 +44,8 @@ function createWindow(): void {
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
-    }
+      sandbox: false,
+    },
   })
 
   mainWindow.on('ready-to-show', () => {
@@ -56,6 +75,12 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  mainWindow.webContents.on('context-menu', () => {
+    Menu.buildFromTemplate([
+      { label: 'Settings', click: () => openSettingsWindow() },
+    ]).popup({ window: mainWindow! })
+  })
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -70,18 +95,42 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  rebuildTracking(store.store)
+  registerIpcHandlers(() => mainWindow, onConfigChanged)
+  createTray(() => openSettingsWindow(), () => app.quit())
+
+  // Key capture IPC: settings window requests capture, main waits for next uiohook keydown
+  ipcMain.handle('settings:capture-key', () => {
+    return new Promise<number>((resolve) => {
+      captureNextKey = (keycode: number) => {
+        captureNextKey = null
+        resolve(keycode)
+      }
+    })
+  })
+
+  ipcMain.handle('settings:cancel-capture', () => {
+    captureNextKey = null
+  })
+
   createWindow()
 
   uIOhook.on('keydown', (e) => {
-    const code = UIOHOOK_TO_DOM[e.keycode]
-    if (code && trackedCodes.has(code) && mainWindow) {
+    // If capturing for settings, resolve the capture promise
+    if (captureNextKey) {
+      captureNextKey(e.keycode)
+      return
+    }
+
+    const code = uiohookMap.get(e.keycode)
+    if (code && mainWindow) {
       mainWindow.webContents.send('global-keydown', code)
     }
   })
 
   uIOhook.on('keyup', (e) => {
-    const code = UIOHOOK_TO_DOM[e.keycode]
-    if (code && trackedCodes.has(code) && mainWindow) {
+    const code = uiohookMap.get(e.keycode)
+    if (code && mainWindow) {
       mainWindow.webContents.send('global-keyup', code)
     }
   })
@@ -90,6 +139,9 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  // Don't quit when all windows close — tray keeps app running
+})
+
+app.on('before-quit', () => {
   uIOhook.stop()
-  app.quit()
 })
