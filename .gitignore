@@ -6,4 +6,3 @@ out
 .idea
 .vscode
 *.log*
-build
