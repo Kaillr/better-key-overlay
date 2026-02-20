@@ -10,6 +10,8 @@ const defaults: AppSettings = {
     inactiveStartColor: 'hsla(0, 100%, 50%, 0)',
     inactiveEndColor: 'hsla(120, 100%, 50%, 1)',
   },
+  showCps: true,
+  showBpm: true,
 }
 
 export const store = new Store<AppSettings>({ defaults })

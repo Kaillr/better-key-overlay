@@ -16,4 +16,6 @@ export interface AppSettings {
   keys: KeyConfigEntry[]
   scrollRate: number
   colors: ColorConfig
+  showCps: boolean
+  showBpm: boolean
 }

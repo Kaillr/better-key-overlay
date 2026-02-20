@@ -58,6 +58,11 @@ export function SettingsView(): React.JSX.Element {
     setSettings(updated)
   }, [])
 
+  const updateToggle = useCallback(async (key: string, value: boolean) => {
+    const updated = await ipcRenderer?.invoke('settings:set', { [key]: value })
+    setSettings(updated)
+  }, [])
+
   if (!settings) return <div className="h-screen bg-neutral-900" />
 
   return (
@@ -87,6 +92,30 @@ export function SettingsView(): React.JSX.Element {
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Colors</h2>
         <ColorPicker colors={settings.colors} onChange={updateColors} />
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold mb-3">Counters</h2>
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.showCps}
+              onChange={(e) => updateToggle('showCps', e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span className="text-sm">Show CPS</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.showBpm}
+              onChange={(e) => updateToggle('showBpm', e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span className="text-sm">Show BPM</span>
+          </label>
+        </div>
       </section>
     </div>
   )
