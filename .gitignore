@@ -4,4 +4,6 @@ out
 .DS_Store
 .eslintcache
 .idea
+.vscode
 *.log*
+build
