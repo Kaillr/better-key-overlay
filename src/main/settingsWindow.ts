@@ -13,10 +13,12 @@ export function openSettingsWindow(): void {
   settingsWindow = new BrowserWindow({
     width: 500,
     height: 600,
-    minWidth: 400,
+    minWidth: 500,
+    minHeight: 400,
     resizable: true,
     title: 'Settings',
     autoHideMenuBar: true,
+    backgroundColor: '#171717',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,

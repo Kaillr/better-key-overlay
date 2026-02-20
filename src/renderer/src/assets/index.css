@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 html, body {
-  background: #171717;
+  background: #000000;
 }
 
 ::-webkit-scrollbar {
@@ -20,7 +20,7 @@ html, body {
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #171717;
 }
 
 ::-webkit-scrollbar-corner {
