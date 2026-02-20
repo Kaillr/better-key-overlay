@@ -31,15 +31,20 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
     let rafId: number
     let lastTime = 0
     let scrollOffset = 0
+    let lastKeyCount = 0
 
-    const resize = () => {
+    const updateSize = () => {
       const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
-      canvas.width = canvasWidth || 1
-      canvas.height = canvas.parentElement?.clientHeight ?? window.innerHeight
+      const targetWidth = canvasWidth || 1
+      const targetHeight = canvas.parentElement?.clientHeight ?? window.innerHeight
+      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+        canvas.width = targetWidth
+        canvas.height = targetHeight
+      }
     }
-    resize()
+    updateSize()
 
-    const observer = new ResizeObserver(resize)
+    const observer = new ResizeObserver(updateSize)
     observer.observe(canvas.parentElement!)
 
     const drawRow = (y: number) => {
@@ -48,12 +53,13 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
       ctx.clearRect(0, y, canvasWidth, 1)
       keys.forEach((key, i) => {
         const xOffset = i * (KEY_WIDTH + KEY_GAP)
-        if (key.pressure === 0) return
+        const pressure = key.pressure > 0 ? key.pressure : key.active ? 1 : 0
+        if (pressure === 0) return
         const kc = key.colors ?? c
         if (kc.gradient) {
           const start = key.active ? kc.activeStartColor : kc.inactiveStartColor
           const end = key.active ? kc.activeEndColor : kc.inactiveEndColor
-          ctx.fillStyle = lerpColor(start, end, key.pressure)
+          ctx.fillStyle = lerpColor(start, end, pressure)
         } else {
           ctx.fillStyle = key.active ? kc.activeEndColor : kc.inactiveStartColor
         }
@@ -65,8 +71,13 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
       const dt = lastTime === 0 ? 0 : (time - lastTime) / 1000
       lastTime = time
 
+      if (keys.length !== lastKeyCount) {
+        lastKeyCount = keys.length
+        updateSize()
+      }
+
       const h = canvas.height
-      scrollOffset += dt * scrollRateRef.current
+      scrollOffset += dt * (scrollRateRef.current || 400)
 
       const pixelsToScroll = Math.floor(scrollOffset)
       scrollOffset -= pixelsToScroll

@@ -75,9 +75,9 @@ export function OverlayView(): React.JSX.Element {
 
   if (!settings) return <div className="h-screen w-screen bg-black" />
 
-  if (keys.length === 0) {
+  if (!settings.keys.some((k) => k.code)) {
     return (
-      <div className="h-screen w-screen bg-black text-white flex items-center justify-center px-4">
+      <div className="h-screen w-screen bg-black text-white flex items-center justify-center px-4 select-none">
         <p className="text-neutral-500 text-sm text-center">
           No keys configured.
           <br />
@@ -97,7 +97,7 @@ export function OverlayView(): React.JSX.Element {
   const bpm = ((cps * 60) / 4).toFixed(0)
 
   return (
-    <div className="h-screen w-screen bg-black text-white flex flex-col items-center px-4 overflow-hidden relative">
+    <div className="h-screen w-screen bg-black text-white flex flex-col items-center px-4 overflow-hidden relative select-none">
       {!ipcRenderer && (
         <a
           href="#/settings"

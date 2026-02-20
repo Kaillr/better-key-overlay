@@ -2,7 +2,7 @@ import type { AppSettings } from './types'
 
 export const defaultSettings: AppSettings = {
   keys: [],
-  scrollRate: 500,
+  scrollRate: 400,
   colors: {
     activeStartColor: '#ff0000',
     activeEndColor: '#ffffff',

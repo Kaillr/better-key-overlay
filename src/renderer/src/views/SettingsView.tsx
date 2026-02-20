@@ -292,6 +292,13 @@ export function SettingsView(): React.JSX.Element {
             </ItemRow>
           </ItemGroup>
         </Section>
+
+        <button
+          onClick={() => set({ ...defaultSettings })}
+          className="w-full py-2 text-sm text-red-400 hover:text-red-300"
+        >
+          Reset to Defaults
+        </button>
       </div>
     </div>
   )
