@@ -1,3 +1,4 @@
+import { HexColorInput } from './HexColorInput'
 import type { KeyStyle, KeyStyleState } from '../../../../shared/types'
 
 interface KeyStyleEditorProps {
@@ -17,21 +18,11 @@ function ColorPair({ label, value, onChange }: ColorPairProps) {
       <span className="text-sm text-neutral-400">{label}</span>
       <div className="flex items-center gap-2">
         <div className="flex flex-col items-center">
-          <input
-            type="color"
-            value={value[0]}
-            onChange={(e) => onChange([e.target.value, value[1]])}
-            className="w-7 h-5 cursor-pointer border-0 bg-transparent"
-          />
+          <HexColorInput value={value[0]} onChange={(v) => onChange([v, value[1]])} />
           <span className="text-[10px] text-neutral-600">low</span>
         </div>
         <div className="flex flex-col items-center">
-          <input
-            type="color"
-            value={value[1]}
-            onChange={(e) => onChange([value[0], e.target.value])}
-            className="w-7 h-5 cursor-pointer border-0 bg-transparent"
-          />
+          <HexColorInput value={value[1]} onChange={(v) => onChange([value[0], v])} />
           <span className="text-[10px] text-neutral-600">high</span>
         </div>
       </div>
