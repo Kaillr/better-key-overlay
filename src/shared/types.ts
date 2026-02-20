@@ -3,6 +3,7 @@ export interface ColorConfig {
   activeEndColor: string
   inactiveStartColor: string
   inactiveEndColor: string
+  gradient: boolean
 }
 
 export interface KeyConfigEntry {
@@ -15,8 +16,11 @@ export interface KeyConfigEntry {
 
 export interface KeyStyleState {
   borderColor: [string, string] // [low pressure, high pressure]
+  borderColorGradient: boolean
   backgroundColor: [string, string]
+  backgroundColorGradient: boolean
   textColor: [string, string]
+  textColorGradient: boolean
 }
 
 export interface KeyStyle {
@@ -39,4 +43,5 @@ export interface AppSettings {
   showBpm: boolean
   keyStyle: KeyStyle
   fade: FadeConfig
+  windowHeight: number
 }

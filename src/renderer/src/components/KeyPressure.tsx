@@ -26,14 +26,18 @@ export function KeyPressure({ keyState, keyStyle }: KeyPressureProps) {
 
   useEffect(() => {
     let rafId: number
+    const resolve = (pair: [string, string], gradient: boolean, p: number): string => {
+      if (!gradient) return pair[0]
+      return lerpHex(pair[0], pair[1], p)
+    }
     const update = () => {
       const el = elRef.current
       if (el) {
         const state = keyState.active ? keyStyle.active : keyStyle.inactive
         const p = keyState.pressure
-        el.style.borderColor = lerpHex(state.borderColor[0], state.borderColor[1], p)
-        el.style.backgroundColor = lerpHex(state.backgroundColor[0], state.backgroundColor[1], p)
-        el.style.color = lerpHex(state.textColor[0], state.textColor[1], p)
+        el.style.borderColor = resolve(state.borderColor, state.borderColorGradient, p)
+        el.style.backgroundColor = resolve(state.backgroundColor, state.backgroundColorGradient, p)
+        el.style.color = resolve(state.textColor, state.textColorGradient, p)
       }
       rafId = requestAnimationFrame(update)
     }

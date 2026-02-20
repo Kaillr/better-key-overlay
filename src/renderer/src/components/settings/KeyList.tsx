@@ -1,75 +1,83 @@
-import { useState } from 'react'
-import { ColorPicker } from './ColorPicker'
-import type { KeyConfigEntry, ColorConfig } from '../../../../shared/types'
+import { useEffect, useState, useRef } from 'react'
+import { ItemSeparator, ItemGroup } from './SettingsLayout'
+import type { KeyConfigEntry } from '../../../../shared/types'
+
+const ipcRenderer = window.electron?.ipcRenderer
 
 interface KeyListProps {
   keys: KeyConfigEntry[]
-  globalColors: ColorConfig
-  onRemove: (code: string) => void
-  onUpdateKeyColors: (code: string, colors: ColorConfig | undefined) => void
+  onRemove: (index: number) => void
+  onRecord: (index: number, code: string, key: string, uiohookKeycode: number) => void
 }
 
-export function KeyList({ keys, globalColors, onRemove, onUpdateKeyColors }: KeyListProps) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null)
+export function KeyList({ keys, onRemove, onRecord }: KeyListProps) {
+  const [recordingIndex, setRecordingIndex] = useState<number | null>(null)
+  const captureRef = useRef<Promise<number> | null>(null)
 
-  if (keys.length === 0) {
-    return <p className="text-neutral-500 text-sm">No keys configured</p>
+  const startRecording = (index: number) => {
+    captureRef.current = ipcRenderer?.invoke('settings:capture-key') as Promise<number>
+    setRecordingIndex(index)
   }
 
-  return (
-    <ul className="space-y-2">
-      {keys.map((key) => {
-        const isExpanded = expandedKey === key.code
-        const hasCustomColors = !!key.colors
+  const cancelRecording = () => {
+    ipcRenderer?.invoke('settings:cancel-capture')
+    captureRef.current = null
+    setRecordingIndex(null)
+  }
 
-        return (
-          <li key={key.code} className="bg-neutral-800 rounded overflow-hidden">
-            <div className="flex items-center justify-between p-2">
-              <button
-                onClick={() => setExpandedKey(isExpanded ? null : key.code)}
-                className="font-mono text-left flex-1"
-              >
-                {key.label}{' '}
-                <span className="text-neutral-500 text-sm">({key.code})</span>
-                {hasCustomColors && (
-                  <span className="text-blue-400 text-xs ml-2">custom colors</span>
-                )}
-              </button>
-              <button
-                onClick={() => onRemove(key.code)}
-                className="text-red-400 hover:text-red-300 text-sm ml-2"
-              >
-                Remove
-              </button>
-            </div>
-            {isExpanded && (
-              <div className="px-2 pb-3 space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hasCustomColors}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        onUpdateKeyColors(key.code, { ...globalColors })
-                      } else {
-                        onUpdateKeyColors(key.code, undefined)
-                      }
-                    }}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm">Use custom colors</span>
-                </label>
-                {hasCustomColors && (
-                  <ColorPicker
-                    colors={key.colors!}
-                    onChange={(colors) => onUpdateKeyColors(key.code, colors)}
-                  />
-                )}
-              </div>
-            )}
-          </li>
-        )
-      })}
-    </ul>
+  useEffect(() => {
+    if (recordingIndex === null) return
+
+    const handler = async (e: KeyboardEvent) => {
+      e.preventDefault()
+      if (e.code === 'Escape') {
+        cancelRecording()
+        return
+      }
+      const uiohookKeycode = (await captureRef.current) ?? 0
+      captureRef.current = null
+      setRecordingIndex(null)
+      onRecord(recordingIndex, e.code, e.key, uiohookKeycode)
+    }
+
+    window.addEventListener('keydown', handler, { once: true })
+    return () => window.removeEventListener('keydown', handler)
+  }, [recordingIndex, onRecord])
+
+  if (keys.length === 0) return null
+
+  return (
+    <ItemGroup>
+      {keys.map((key, i) => (
+        <div key={i}>
+          {i > 0 && <ItemSeparator />}
+          <div className="flex items-center justify-between p-4 gap-3">
+            <span className="text-sm font-mono text-neutral-300 flex-1">
+              {recordingIndex === i ? (
+                <span className="text-blue-300">Press any key...</span>
+              ) : key.code ? (
+                key.label
+              ) : (
+                <span className="text-neutral-500">No Keybind Set</span>
+              )}
+            </span>
+            <button
+              onClick={() =>
+                recordingIndex === i ? cancelRecording() : startRecording(i)
+              }
+              className="px-3 py-1.5 text-xs rounded-lg border border-neutral-600 hover:border-neutral-500 bg-neutral-800"
+            >
+              {recordingIndex === i ? 'Cancel' : 'Record Keybind'}
+            </button>
+            <button
+              onClick={() => onRemove(i)}
+              className="text-red-400 hover:text-red-300 text-xs"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ))}
+    </ItemGroup>
   )
 }

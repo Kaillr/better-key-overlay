@@ -1,7 +1,17 @@
 import { ipcMain, type BrowserWindow } from 'electron'
 import { store } from './store'
 import { getAnalogKey, deriveLabel } from '../shared/keyMappings'
-import type { AppSettings, KeyConfigEntry, ColorConfig } from '../shared/types'
+import type { AppSettings, KeyConfigEntry } from '../shared/types'
+
+function notify(
+  getOverlayWindow: () => BrowserWindow | null,
+  onConfigChanged: (settings: AppSettings) => void
+): AppSettings {
+  const settings = store.store
+  onConfigChanged(settings)
+  getOverlayWindow()?.webContents.send('config-updated', settings)
+  return settings
+}
 
 export function registerIpcHandlers(
   getOverlayWindow: () => BrowserWindow | null,
@@ -14,51 +24,40 @@ export function registerIpcHandlers(
   ipcMain.handle('settings:set', (_event, partial: Partial<AppSettings>) => {
     const merged = { ...store.store, ...partial }
     store.store = merged
-    onConfigChanged(merged)
-    getOverlayWindow()?.webContents.send('config-updated', merged)
-    return merged
+    return notify(getOverlayWindow, onConfigChanged)
+  })
+
+  ipcMain.handle('settings:add-key', () => {
+    const entry: KeyConfigEntry = {
+      code: '',
+      label: '',
+      analogKey: 0,
+      uiohookKeycode: 0,
+    }
+    store.set('keys', [...store.get('keys'), entry])
+    return notify(getOverlayWindow, onConfigChanged)
   })
 
   ipcMain.handle(
-    'settings:add-key',
-    (_event, data: { code: string; key: string; uiohookKeycode: number }) => {
-      const existing = store.get('keys')
-      if (existing.some((k) => k.code === data.code)) {
-        return null // duplicate
-      }
-      const entry: KeyConfigEntry = {
+    'settings:record-key',
+    (_event, data: { index: number; code: string; key: string; uiohookKeycode: number }) => {
+      const keys = [...store.get('keys')]
+      if (data.index < 0 || data.index >= keys.length) return store.store
+      keys[data.index] = {
+        ...keys[data.index],
         code: data.code,
-        label: deriveLabel(data.code, data.key),
+        label: deriveLabel(data.code),
         analogKey: getAnalogKey(data.code),
         uiohookKeycode: data.uiohookKeycode,
       }
-      const keys = [...existing, entry]
       store.set('keys', keys)
-      const settings = store.store
-      onConfigChanged(settings)
-      getOverlayWindow()?.webContents.send('config-updated', settings)
-      return entry
+      return notify(getOverlayWindow, onConfigChanged)
     }
   )
 
-  ipcMain.handle(
-    'settings:update-key-colors',
-    (_event, data: { code: string; colors: ColorConfig | undefined }) => {
-      const keys = store.get('keys').map((k) =>
-        k.code === data.code ? { ...k, colors: data.colors } : k
-      )
-      store.set('keys', keys)
-      const settings = store.store
-      onConfigChanged(settings)
-      getOverlayWindow()?.webContents.send('config-updated', settings)
-    }
-  )
-
-  ipcMain.handle('settings:remove-key', (_event, data: { code: string }) => {
-    const keys = store.get('keys').filter((k) => k.code !== data.code)
+  ipcMain.handle('settings:remove-key', (_event, data: { index: number }) => {
+    const keys = store.get('keys').filter((_, i) => i !== data.index)
     store.set('keys', keys)
-    const settings = store.store
-    onConfigChanged(settings)
-    getOverlayWindow()?.webContents.send('config-updated', settings)
+    return notify(getOverlayWindow, onConfigChanged)
   })
 }

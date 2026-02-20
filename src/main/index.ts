@@ -29,15 +29,16 @@ function rebuildTracking(settings: AppSettings): void {
 function onConfigChanged(settings: AppSettings): void {
   rebuildTracking(settings)
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setContentSize(contentWidth(settings.keys.length), 720)
+    const boundKeys = settings.keys.filter((k) => k.code).length
+    mainWindow.setContentSize(contentWidth(boundKeys), settings.windowHeight)
   }
 }
 
 function createWindow(): void {
   const keys = store.get('keys')
   mainWindow = new BrowserWindow({
-    width: contentWidth(keys.length),
-    height: 720,
+    width: contentWidth(keys.filter((k) => k.code).length),
+    height: store.get('windowHeight'),
     resizable: false,
     useContentSize: true,
     show: false,

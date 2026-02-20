@@ -36,11 +36,28 @@ export function getAnalogKey(code: string): number {
   return DOM_TO_ANALOG[code] ?? 0
 }
 
-export function deriveLabel(code: string, key: string): string {
-  if (key.length === 1) return key.toUpperCase()
-  if (code.startsWith('Arrow')) return code.replace('Arrow', '↑↓←→'.charAt(0)) // fallback
-  if (code.startsWith('Digit')) return code.replace('Digit', '')
-  if (code.startsWith('Numpad')) return 'Num' + code.replace('Numpad', '')
-  // Use the key name for special keys
-  return key.length <= 6 ? key : code
+const CODE_TO_LABEL: Record<string, string> = {
+  Space: 'Space', Enter: 'Enter', Escape: 'Esc', Backspace: 'Bksp',
+  Tab: 'Tab', CapsLock: 'Caps', Delete: 'Del', Insert: 'Ins',
+  Home: 'Home', End: 'End', PageUp: 'PgUp', PageDown: 'PgDn',
+  ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
+  ShiftLeft: 'LShift', ShiftRight: 'RShift',
+  ControlLeft: 'LCtrl', ControlRight: 'RCtrl',
+  AltLeft: 'LAlt', AltRight: 'RAlt',
+  MetaLeft: 'LMeta', MetaRight: 'RMeta',
+  Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']',
+  Backslash: '\\', Semicolon: ';', Quote: "'", Backquote: '`',
+  Comma: ',', Period: '.', Slash: '/',
+  NumLock: 'NumLk', NumpadDivide: 'Num/', NumpadMultiply: 'Num*',
+  NumpadSubtract: 'Num-', NumpadAdd: 'Num+', NumpadEnter: 'NumEnt',
+  NumpadDecimal: 'Num.',
+}
+
+export function deriveLabel(code: string): string {
+  if (CODE_TO_LABEL[code]) return CODE_TO_LABEL[code]
+  if (code.startsWith('Key')) return code.slice(3)
+  if (code.startsWith('Digit')) return code.slice(5)
+  if (code.startsWith('Numpad')) return 'Num' + code.slice(6)
+  if (code.startsWith('F') && /^F\d+$/.test(code)) return code
+  return code
 }

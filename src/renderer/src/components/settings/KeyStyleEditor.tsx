@@ -1,100 +1,118 @@
 import { HexColorInput } from './HexColorInput'
-import type { KeyStyle, KeyStyleState } from '../../../../shared/types'
+import { ItemRow, ItemSeparator, ItemGroup } from './SettingsLayout'
+import type { KeyStyle } from '../../../../shared/types'
 
 interface KeyStyleEditorProps {
   keyStyle: KeyStyle
   onChange: (keyStyle: KeyStyle) => void
 }
 
-interface ColorPairProps {
-  label: string
-  value: [string, string]
-  onChange: (value: [string, string]) => void
-}
+type StyleProp = 'borderColor' | 'backgroundColor' | 'textColor'
+type GradientProp = 'borderColorGradient' | 'backgroundColorGradient' | 'textColorGradient'
 
-function ColorPair({ label, value, onChange }: ColorPairProps) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-neutral-400">{label}</span>
-      <div className="flex items-center gap-2">
-        <div className="flex flex-col items-center">
-          <HexColorInput value={value[0]} onChange={(v) => onChange([v, value[1]])} />
-          <span className="text-[10px] text-neutral-600">low</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <HexColorInput value={value[1]} onChange={(v) => onChange([value[0], v])} />
-          <span className="text-[10px] text-neutral-600">high</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function StateEditor({
+function PropertyGroup({
   label,
-  state,
+  prop,
+  gradientProp,
+  keyStyle,
   onChange,
 }: {
   label: string
-  state: KeyStyleState
-  onChange: (state: KeyStyleState) => void
+  prop: StyleProp
+  gradientProp: GradientProp
+  keyStyle: KeyStyle
+  onChange: (keyStyle: KeyStyle) => void
 }) {
+  const { active, inactive } = keyStyle
+  const gradient = active[gradientProp] || inactive[gradientProp]
+
+  const toggleGradient = (enabled: boolean) => {
+    onChange({
+      ...keyStyle,
+      active: { ...active, [gradientProp]: enabled },
+      inactive: { ...inactive, [gradientProp]: enabled },
+    })
+  }
+
+  const setActivePair = (index: 0 | 1, value: string) => {
+    const pair = [...active[prop]] as [string, string]
+    pair[index] = value
+    onChange({ ...keyStyle, active: { ...active, [prop]: pair } })
+  }
+
+  const setInactivePair = (index: 0 | 1, value: string) => {
+    const pair = [...inactive[prop]] as [string, string]
+    pair[index] = value
+    onChange({ ...keyStyle, inactive: { ...inactive, [prop]: pair } })
+  }
+
+  const setActiveBoth = (value: string) => {
+    onChange({ ...keyStyle, active: { ...active, [prop]: [value, value] } })
+  }
+
+  const setInactiveBoth = (value: string) => {
+    onChange({ ...keyStyle, inactive: { ...inactive, [prop]: [value, value] } })
+  }
+
   return (
-    <div className="space-y-2">
-      <h4 className="text-sm font-medium text-neutral-300">{label}</h4>
-      <div className="space-y-2 pl-2">
-        <ColorPair
-          label="Border"
-          value={state.borderColor}
-          onChange={(v) => onChange({ ...state, borderColor: v })}
+    <ItemGroup>
+      {gradient ? (
+        <>
+          <ItemRow label={`Active ${label}`}>
+            <HexColorInput value={active[prop][0]} onChange={(v) => setActivePair(0, v)} />
+            <HexColorInput value={active[prop][1]} onChange={(v) => setActivePair(1, v)} />
+          </ItemRow>
+          <ItemSeparator />
+          <ItemRow label={`Inactive ${label}`}>
+            <HexColorInput value={inactive[prop][0]} onChange={(v) => setInactivePair(0, v)} />
+            <HexColorInput value={inactive[prop][1]} onChange={(v) => setInactivePair(1, v)} />
+          </ItemRow>
+        </>
+      ) : (
+        <>
+          <ItemRow label={`Active ${label}`}>
+            <HexColorInput value={active[prop][1]} onChange={setActiveBoth} />
+          </ItemRow>
+          <ItemSeparator />
+          <ItemRow label={`Inactive ${label}`}>
+            <HexColorInput value={inactive[prop][0]} onChange={setInactiveBoth} />
+          </ItemRow>
+        </>
+      )}
+      <ItemSeparator />
+      <ItemRow label="Pressure gradient">
+        <input
+          type="checkbox"
+          checked={gradient}
+          onChange={(e) => toggleGradient(e.target.checked)}
+          className="w-4 h-4"
         />
-        <ColorPair
-          label="Background"
-          value={state.backgroundColor}
-          onChange={(v) => onChange({ ...state, backgroundColor: v })}
-        />
-        <ColorPair
-          label="Text"
-          value={state.textColor}
-          onChange={(v) => onChange({ ...state, textColor: v })}
-        />
-      </div>
-    </div>
+      </ItemRow>
+    </ItemGroup>
   )
 }
 
 export function KeyStyleEditor({ keyStyle, onChange }: KeyStyleEditorProps) {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-6">
-        <StateEditor
-          label="Active"
-          state={keyStyle.active}
-          onChange={(active) => onChange({ ...keyStyle, active })}
-        />
-        <StateEditor
-          label="Inactive"
-          state={keyStyle.inactive}
-          onChange={(inactive) => onChange({ ...keyStyle, inactive })}
-        />
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center gap-4">
-          <label className="text-sm text-neutral-400 w-28">Border width</label>
+    <div className="flex flex-col gap-3">
+      <PropertyGroup label="border" prop="borderColor" gradientProp="borderColorGradient" keyStyle={keyStyle} onChange={onChange} />
+      <PropertyGroup label="background" prop="backgroundColor" gradientProp="backgroundColorGradient" keyStyle={keyStyle} onChange={onChange} />
+      <PropertyGroup label="text" prop="textColor" gradientProp="textColorGradient" keyStyle={keyStyle} onChange={onChange} />
+      <ItemGroup>
+        <ItemRow label="Border width">
           <input
             type="range"
             min={0}
-            max={8}
+            max={20}
             step={1}
             value={keyStyle.borderWidth}
             onChange={(e) => onChange({ ...keyStyle, borderWidth: Number(e.target.value) })}
-            className="flex-1"
+            className="w-24"
           />
-          <span className="text-xs text-neutral-500 w-10 text-right">{keyStyle.borderWidth}px</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <label className="text-sm text-neutral-400 w-28">Corner radius</label>
+          <span className="text-xs text-neutral-500 w-8 text-right">{keyStyle.borderWidth}px</span>
+        </ItemRow>
+        <ItemSeparator />
+        <ItemRow label="Corner radius">
           <input
             type="range"
             min={0}
@@ -102,11 +120,11 @@ export function KeyStyleEditor({ keyStyle, onChange }: KeyStyleEditorProps) {
             step={1}
             value={keyStyle.borderRadius}
             onChange={(e) => onChange({ ...keyStyle, borderRadius: Number(e.target.value) })}
-            className="flex-1"
+            className="w-24"
           />
-          <span className="text-xs text-neutral-500 w-10 text-right">{keyStyle.borderRadius}px</span>
-        </div>
-      </div>
+          <span className="text-xs text-neutral-500 w-8 text-right">{keyStyle.borderRadius}px</span>
+        </ItemRow>
+      </ItemGroup>
     </div>
   )
 }

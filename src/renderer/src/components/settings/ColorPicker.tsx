@@ -1,4 +1,5 @@
 import { HexColorInput } from './HexColorInput'
+import { ItemRow, ItemSeparator, ItemGroup } from './SettingsLayout'
 import type { ColorConfig } from '../../../../shared/types'
 
 interface ColorPickerProps {
@@ -6,58 +7,45 @@ interface ColorPickerProps {
   onChange: (colors: ColorConfig) => void
 }
 
-interface ColorRowProps {
-  label: string
-  value: string
-  onChange: (value: string) => void
-}
-
-function ColorRow({ label, value, onChange }: ColorRowProps) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-neutral-400">{label}</span>
-      <HexColorInput value={value} onChange={onChange} />
-    </div>
-  )
-}
-
 export function ColorPicker({ colors, onChange }: ColorPickerProps) {
-  const update = (key: keyof ColorConfig, value: string): void => {
-    onChange({ ...colors, [key]: value })
+  const update = (partial: Partial<ColorConfig>): void => {
+    onChange({ ...colors, ...partial })
   }
 
   return (
-    <div className="grid grid-cols-2 gap-6">
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-neutral-300">Active</h4>
-        <div className="space-y-2 pl-2">
-          <ColorRow
-            label="Low pressure"
-            value={colors.activeStartColor}
-            onChange={(v) => update('activeStartColor', v)}
-          />
-          <ColorRow
-            label="High pressure"
-            value={colors.activeEndColor}
-            onChange={(v) => update('activeEndColor', v)}
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium text-neutral-300">Inactive</h4>
-        <div className="space-y-2 pl-2">
-          <ColorRow
-            label="Low pressure"
-            value={colors.inactiveStartColor}
-            onChange={(v) => update('inactiveStartColor', v)}
-          />
-          <ColorRow
-            label="High pressure"
-            value={colors.inactiveEndColor}
-            onChange={(v) => update('inactiveEndColor', v)}
-          />
-        </div>
-      </div>
-    </div>
+    <ItemGroup>
+      {colors.gradient ? (
+        <>
+          <ItemRow label="Active">
+            <HexColorInput value={colors.activeStartColor} onChange={(v) => update({ activeStartColor: v })} />
+            <HexColorInput value={colors.activeEndColor} onChange={(v) => update({ activeEndColor: v })} />
+          </ItemRow>
+          <ItemSeparator />
+          <ItemRow label="Inactive">
+            <HexColorInput value={colors.inactiveStartColor} onChange={(v) => update({ inactiveStartColor: v })} />
+            <HexColorInput value={colors.inactiveEndColor} onChange={(v) => update({ inactiveEndColor: v })} />
+          </ItemRow>
+        </>
+      ) : (
+        <>
+          <ItemRow label="Active">
+            <HexColorInput value={colors.activeEndColor} onChange={(v) => update({ activeEndColor: v })} />
+          </ItemRow>
+          <ItemSeparator />
+          <ItemRow label="Inactive">
+            <HexColorInput value={colors.inactiveStartColor} onChange={(v) => update({ inactiveStartColor: v })} />
+          </ItemRow>
+        </>
+      )}
+      <ItemSeparator />
+      <ItemRow label="Pressure gradient">
+        <input
+          type="checkbox"
+          checked={colors.gradient}
+          onChange={(e) => update({ gradient: e.target.checked })}
+          className="w-4 h-4"
+        />
+      </ItemRow>
+    </ItemGroup>
   )
 }

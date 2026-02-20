@@ -1,179 +1,161 @@
 import { useCallback, useEffect, useState } from 'react'
 import { KeyList } from '../components/settings/KeyList'
-import { KeyCapture } from '../components/settings/KeyCapture'
-import { ScrollSpeedSlider } from '../components/settings/ScrollSpeedSlider'
 import { ColorPicker } from '../components/settings/ColorPicker'
 import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
-import type { AppSettings, ColorConfig, KeyStyle, FadeConfig } from '../../../shared/types'
+import { Section, ItemGroup, ItemRow, ItemSeparator } from '../components/settings/SettingsLayout'
+import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
 
 export function SettingsView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const [capturing, setCapturing] = useState(false)
-  const [capturePromise, setCapturePromise] = useState<Promise<number> | null>(null)
 
   useEffect(() => {
     ipcRenderer?.invoke('settings:get').then(setSettings)
   }, [])
 
-  const startCapture = useCallback(() => {
-    // Start listening for uiohook keycode in main process
-    const promise = ipcRenderer?.invoke('settings:capture-key') as Promise<number>
-    setCapturePromise(promise)
-    setCapturing(true)
+  const set = useCallback(async (partial: Partial<AppSettings>) => {
+    const updated = await ipcRenderer?.invoke('settings:set', partial)
+    setSettings(updated)
   }, [])
 
-  const onCapture = useCallback(
-    async (code: string, key: string) => {
-      // Wait for the uiohook keycode from the same keypress
-      const uiohookKeycode = (await capturePromise) ?? 0
-      await ipcRenderer?.invoke('settings:add-key', { code, key, uiohookKeycode })
-      const updated = await ipcRenderer?.invoke('settings:get')
+  const addKey = useCallback(async () => {
+    const updated = await ipcRenderer?.invoke('settings:add-key')
+    setSettings(updated)
+  }, [])
+
+  const removeKey = useCallback(async (index: number) => {
+    await ipcRenderer?.invoke('settings:remove-key', { index })
+    const updated = await ipcRenderer?.invoke('settings:get')
+    setSettings(updated)
+  }, [])
+
+  const recordKey = useCallback(
+    async (index: number, code: string, key: string, uiohookKeycode: number) => {
+      const updated = await ipcRenderer?.invoke('settings:record-key', {
+        index,
+        code,
+        key,
+        uiohookKeycode,
+      })
       setSettings(updated)
-      setCapturing(false)
-      setCapturePromise(null)
     },
-    [capturePromise]
+    []
   )
-
-  const onCancelCapture = useCallback(() => {
-    ipcRenderer?.invoke('settings:cancel-capture')
-    setCapturing(false)
-    setCapturePromise(null)
-  }, [])
-
-  const updateKeyColors = useCallback(async (code: string, colors: ColorConfig | undefined) => {
-    await ipcRenderer?.invoke('settings:update-key-colors', { code, colors })
-    const updated = await ipcRenderer?.invoke('settings:get')
-    setSettings(updated)
-  }, [])
-
-  const removeKey = useCallback(async (code: string) => {
-    await ipcRenderer?.invoke('settings:remove-key', { code })
-    const updated = await ipcRenderer?.invoke('settings:get')
-    setSettings(updated)
-  }, [])
-
-  const updateScrollRate = useCallback(async (rate: number) => {
-    const updated = await ipcRenderer?.invoke('settings:set', { scrollRate: rate })
-    setSettings(updated)
-  }, [])
-
-  const updateColors = useCallback(async (colors: ColorConfig) => {
-    const updated = await ipcRenderer?.invoke('settings:set', { colors })
-    setSettings(updated)
-  }, [])
-
-  const updateToggle = useCallback(async (key: string, value: boolean) => {
-    const updated = await ipcRenderer?.invoke('settings:set', { [key]: value })
-    setSettings(updated)
-  }, [])
-
-  const updateKeyStyle = useCallback(async (keyStyle: KeyStyle) => {
-    const updated = await ipcRenderer?.invoke('settings:set', { keyStyle })
-    setSettings(updated)
-  }, [])
-
-  const updateFade = useCallback(async (fade: FadeConfig) => {
-    const updated = await ipcRenderer?.invoke('settings:set', { fade })
-    setSettings(updated)
-  }, [])
 
   if (!settings) return <div className="h-screen bg-neutral-900" />
 
   return (
-    <div className="p-6 bg-neutral-900 text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="p-6 md:p-8 bg-neutral-900 text-white min-h-screen">
+      <div className="max-w-xl mx-auto flex flex-col gap-8">
+        <h1 className="text-2xl font-semibold">Settings</h1>
 
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Keys</h2>
-        <KeyList
-          keys={settings.keys}
-          globalColors={settings.colors}
-          onRemove={removeKey}
-          onUpdateKeyColors={updateKeyColors}
-        />
-        {capturing ? (
-          <KeyCapture onCapture={onCapture} onCancel={onCancelCapture} />
-        ) : (
+        <Section title="Keys">
+          <KeyList
+            keys={settings.keys}
+            onRemove={removeKey}
+            onRecord={recordKey}
+          />
           <button
-            onClick={startCapture}
-            className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm"
+            onClick={addKey}
+            className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm w-full"
           >
             Add Key
           </button>
-        )}
-      </section>
+        </Section>
 
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Scroll Speed</h2>
-        <ScrollSpeedSlider value={settings.scrollRate} onChange={updateScrollRate} />
-      </section>
+        <Section title="Key Style">
+          <KeyStyleEditor
+            keyStyle={settings.keyStyle}
+            onChange={(keyStyle) => set({ keyStyle })}
+          />
+        </Section>
 
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Colors</h2>
-        <ColorPicker colors={settings.colors} onChange={updateColors} />
-      </section>
+        <Section title="Pressure Colors">
+          <ColorPicker
+            colors={settings.colors}
+            onChange={(colors) => set({ colors })}
+          />
+        </Section>
 
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Fade</h2>
-        <div className="space-y-3">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.fade.enabled}
-              onChange={(e) => updateFade({ ...settings.fade, enabled: e.target.checked })}
-              className="w-4 h-4"
-            />
-            <span className="text-sm">Fade out at top</span>
-          </label>
-          {settings.fade.enabled && (
-            <div className="flex items-center gap-4">
-              <label className="text-sm text-neutral-400 w-28">Fade height</label>
+        <Section title="Scroll">
+          <ItemGroup>
+            <ItemRow label="Speed">
               <input
                 type="range"
                 min={50}
-                max={500}
-                step={10}
-                value={settings.fade.height}
-                onChange={(e) => updateFade({ ...settings.fade, height: Number(e.target.value) })}
-                className="flex-1"
+                max={1000}
+                step={50}
+                value={settings.scrollRate}
+                onChange={(e) => set({ scrollRate: Number(e.target.value) })}
+                className="w-24"
               />
-              <span className="text-xs text-neutral-500 w-10 text-right">{settings.fade.height}px</span>
-            </div>
-          )}
-        </div>
-      </section>
+              <span className="text-xs text-neutral-500 w-14 text-right">{settings.scrollRate} px/s</span>
+            </ItemRow>
+            <ItemSeparator />
+            <ItemRow label="Fade out at top">
+              <input
+                type="checkbox"
+                checked={settings.fade.enabled}
+                onChange={(e) => set({ fade: { ...settings.fade, enabled: e.target.checked } })}
+                className="w-4 h-4"
+              />
+            </ItemRow>
+            {settings.fade.enabled && (
+              <>
+                <ItemSeparator />
+                <ItemRow label="Fade height">
+                  <input
+                    type="range"
+                    min={50}
+                    max={500}
+                    step={10}
+                    value={settings.fade.height}
+                    onChange={(e) => set({ fade: { ...settings.fade, height: Number(e.target.value) } })}
+                    className="w-24"
+                  />
+                  <span className="text-xs text-neutral-500 w-10 text-right">{settings.fade.height}px</span>
+                </ItemRow>
+              </>
+            )}
+          </ItemGroup>
+        </Section>
 
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Key Style</h2>
-        <KeyStyleEditor keyStyle={settings.keyStyle} onChange={updateKeyStyle} />
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Counters</h2>
-        <div className="space-y-3">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.showCps}
-              onChange={(e) => updateToggle('showCps', e.target.checked)}
-              className="w-4 h-4"
-            />
-            <span className="text-sm">Show CPS</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.showBpm}
-              onChange={(e) => updateToggle('showBpm', e.target.checked)}
-              className="w-4 h-4"
-            />
-            <span className="text-sm">Show BPM</span>
-          </label>
-        </div>
-      </section>
+        <Section title="Display">
+          <ItemGroup>
+            <ItemRow label="Window height">
+              <input
+                type="range"
+                min={200}
+                max={1200}
+                step={10}
+                value={settings.windowHeight}
+                onChange={(e) => set({ windowHeight: Number(e.target.value) })}
+                className="w-24"
+              />
+              <span className="text-xs text-neutral-500 w-12 text-right">{settings.windowHeight}px</span>
+            </ItemRow>
+            <ItemSeparator />
+            <ItemRow label="Show CPS">
+              <input
+                type="checkbox"
+                checked={settings.showCps}
+                onChange={(e) => set({ showCps: e.target.checked })}
+                className="w-4 h-4"
+              />
+            </ItemRow>
+            <ItemSeparator />
+            <ItemRow label="Show BPM">
+              <input
+                type="checkbox"
+                checked={settings.showBpm}
+                onChange={(e) => set({ showBpm: e.target.checked })}
+                className="w-4 h-4"
+              />
+            </ItemRow>
+          </ItemGroup>
+        </Section>
+      </div>
     </div>
   )
 }
