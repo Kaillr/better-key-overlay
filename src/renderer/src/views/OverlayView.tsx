@@ -70,14 +70,14 @@ export function OverlayView(): React.JSX.Element {
   const bpm = ((cps * 60) / 4).toFixed(0)
 
   return (
-    <div className="h-screen w-screen bg-black text-white flex flex-col items-center px-4 pb-4">
+    <div className="h-screen w-screen bg-black text-white flex flex-col items-center px-4 pb-4 overflow-hidden">
       <div className="flex-1 flex flex-col items-center w-full min-h-0">
         <div className="flex-1 min-h-0" style={{ width: canvasWidth }}>
-          <PressureCanvas scrollRate={settings.scrollRate} colors={settings.colors} />
+          <PressureCanvas scrollRate={settings.scrollRate} colors={settings.colors} fade={settings.fade} />
         </div>
-        <div className="flex" style={{ gap: KEY_GAP }}>
+        <div className="flex relative z-10" style={{ gap: KEY_GAP, marginTop: -settings.keyStyle.borderRadius }}>
           {keys.map((key) => (
-            <KeyPressure key={key.code} label={key.label} active={key.active} />
+            <KeyPressure key={key.code} keyState={key} keyStyle={settings.keyStyle} />
           ))}
         </div>
         {(settings.showCps || settings.showBpm) && (

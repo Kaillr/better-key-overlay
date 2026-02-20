@@ -3,7 +3,8 @@ import { KeyList } from '../components/settings/KeyList'
 import { KeyCapture } from '../components/settings/KeyCapture'
 import { ScrollSpeedSlider } from '../components/settings/ScrollSpeedSlider'
 import { ColorPicker } from '../components/settings/ColorPicker'
-import type { AppSettings, ColorConfig } from '../../../shared/types'
+import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
+import type { AppSettings, ColorConfig, KeyStyle, FadeConfig } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
 
@@ -42,6 +43,12 @@ export function SettingsView(): React.JSX.Element {
     setCapturePromise(null)
   }, [])
 
+  const updateKeyColors = useCallback(async (code: string, colors: ColorConfig | undefined) => {
+    await ipcRenderer?.invoke('settings:update-key-colors', { code, colors })
+    const updated = await ipcRenderer?.invoke('settings:get')
+    setSettings(updated)
+  }, [])
+
   const removeKey = useCallback(async (code: string) => {
     await ipcRenderer?.invoke('settings:remove-key', { code })
     const updated = await ipcRenderer?.invoke('settings:get')
@@ -63,6 +70,16 @@ export function SettingsView(): React.JSX.Element {
     setSettings(updated)
   }, [])
 
+  const updateKeyStyle = useCallback(async (keyStyle: KeyStyle) => {
+    const updated = await ipcRenderer?.invoke('settings:set', { keyStyle })
+    setSettings(updated)
+  }, [])
+
+  const updateFade = useCallback(async (fade: FadeConfig) => {
+    const updated = await ipcRenderer?.invoke('settings:set', { fade })
+    setSettings(updated)
+  }, [])
+
   if (!settings) return <div className="h-screen bg-neutral-900" />
 
   return (
@@ -71,7 +88,12 @@ export function SettingsView(): React.JSX.Element {
 
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Keys</h2>
-        <KeyList keys={settings.keys} onRemove={removeKey} />
+        <KeyList
+          keys={settings.keys}
+          globalColors={settings.colors}
+          onRemove={removeKey}
+          onUpdateKeyColors={updateKeyColors}
+        />
         {capturing ? (
           <KeyCapture onCapture={onCapture} onCancel={onCancelCapture} />
         ) : (
@@ -92,6 +114,41 @@ export function SettingsView(): React.JSX.Element {
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Colors</h2>
         <ColorPicker colors={settings.colors} onChange={updateColors} />
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold mb-3">Fade</h2>
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.fade.enabled}
+              onChange={(e) => updateFade({ ...settings.fade, enabled: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <span className="text-sm">Fade out at top</span>
+          </label>
+          {settings.fade.enabled && (
+            <div className="flex items-center gap-4">
+              <label className="text-sm text-neutral-400 w-28">Fade height</label>
+              <input
+                type="range"
+                min={50}
+                max={500}
+                step={10}
+                value={settings.fade.height}
+                onChange={(e) => updateFade({ ...settings.fade, height: Number(e.target.value) })}
+                className="flex-1"
+              />
+              <span className="text-xs text-neutral-500 w-10 text-right">{settings.fade.height}px</span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold mb-3">Key Style</h2>
+        <KeyStyleEditor keyStyle={settings.keyStyle} onChange={updateKeyStyle} />
       </section>
 
       <section className="mb-8">

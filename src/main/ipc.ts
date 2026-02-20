@@ -1,7 +1,7 @@
 import { ipcMain, type BrowserWindow } from 'electron'
 import { store } from './store'
 import { getAnalogKey, deriveLabel } from '../shared/keyMappings'
-import type { AppSettings, KeyConfigEntry } from '../shared/types'
+import type { AppSettings, KeyConfigEntry, ColorConfig } from '../shared/types'
 
 export function registerIpcHandlers(
   getOverlayWindow: () => BrowserWindow | null,
@@ -38,6 +38,19 @@ export function registerIpcHandlers(
       onConfigChanged(settings)
       getOverlayWindow()?.webContents.send('config-updated', settings)
       return entry
+    }
+  )
+
+  ipcMain.handle(
+    'settings:update-key-colors',
+    (_event, data: { code: string; colors: ColorConfig | undefined }) => {
+      const keys = store.get('keys').map((k) =>
+        k.code === data.code ? { ...k, colors: data.colors } : k
+      )
+      store.set('keys', keys)
+      const settings = store.store
+      onConfigChanged(settings)
+      getOverlayWindow()?.webContents.send('config-updated', settings)
     }
   )
 

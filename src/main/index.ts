@@ -52,6 +52,11 @@ function createWindow(): void {
     mainWindow!.show()
   })
 
+  mainWindow.on('closed', () => {
+    mainWindow = null
+    app.quit()
+  })
+
   mainWindow.webContents.session.on('select-hid-device', (event, details, callback) => {
     event.preventDefault()
     const device = details.deviceList.find((d) => d.vendorId === 0x31e3)
@@ -139,7 +144,7 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
-  // Don't quit when all windows close — tray keeps app running
+  // Tray keeps process alive, but we quit explicitly when overlay closes
 })
 
 app.on('before-quit', () => {

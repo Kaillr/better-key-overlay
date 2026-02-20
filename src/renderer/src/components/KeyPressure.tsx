@@ -1,19 +1,58 @@
+import { useEffect, useRef } from 'react'
 import { KEY_WIDTH } from '../../../shared/config'
+import type { KeyStyle } from '../../../shared/types'
+import type { KeyState } from '../lib/pressureStore'
 
-interface KeyPressureProps {
-  label: string
-  active: boolean
+function lerpHex(a: string, b: string, t: number): string {
+  const ar = parseInt(a.slice(1, 3), 16)
+  const ag = parseInt(a.slice(3, 5), 16)
+  const ab = parseInt(a.slice(5, 7), 16)
+  const br = parseInt(b.slice(1, 3), 16)
+  const bg = parseInt(b.slice(3, 5), 16)
+  const bb = parseInt(b.slice(5, 7), 16)
+  const r = Math.round(ar + (br - ar) * t)
+  const g = Math.round(ag + (bg - ag) * t)
+  const bl = Math.round(ab + (bb - ab) * t)
+  return `rgb(${r},${g},${bl})`
 }
 
-export function KeyPressure({ label, active }: KeyPressureProps) {
+interface KeyPressureProps {
+  keyState: KeyState
+  keyStyle: KeyStyle
+}
+
+export function KeyPressure({ keyState, keyStyle }: KeyPressureProps) {
+  const elRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let rafId: number
+    const update = () => {
+      const el = elRef.current
+      if (el) {
+        const state = keyState.active ? keyStyle.active : keyStyle.inactive
+        const p = keyState.pressure
+        el.style.borderColor = lerpHex(state.borderColor[0], state.borderColor[1], p)
+        el.style.backgroundColor = lerpHex(state.backgroundColor[0], state.backgroundColor[1], p)
+        el.style.color = lerpHex(state.textColor[0], state.textColor[1], p)
+      }
+      rafId = requestAnimationFrame(update)
+    }
+    rafId = requestAnimationFrame(update)
+    return () => cancelAnimationFrame(rafId)
+  }, [keyState, keyStyle])
+
   return (
     <div
-      className={`h-20 flex items-center justify-center text-2xl font-bold border-2 ${
-        active ? 'border-white bg-neutral-700' : 'border-neutral-600 bg-neutral-900'
-      }`}
-      style={{ width: KEY_WIDTH }}
+      ref={elRef}
+      className="h-20 flex items-center justify-center text-2xl font-bold"
+      style={{
+        width: KEY_WIDTH,
+        borderRadius: keyStyle.borderRadius,
+        borderStyle: 'solid',
+        borderWidth: keyStyle.borderWidth,
+      }}
     >
-      {label}
+      {keyState.label}
     </div>
   )
 }

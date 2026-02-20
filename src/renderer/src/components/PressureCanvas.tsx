@@ -2,14 +2,15 @@ import { useEffect, useRef } from 'react'
 import { keys } from '../lib/pressureStore'
 import { lerpColor } from '../lib/color'
 import { KEY_WIDTH, KEY_GAP } from '../../../shared/config'
-import type { ColorConfig } from '../../../shared/types'
+import type { ColorConfig, FadeConfig } from '../../../shared/types'
 
 interface PressureCanvasProps {
   scrollRate: number
   colors: ColorConfig
+  fade: FadeConfig
 }
 
-export function PressureCanvas({ scrollRate, colors }: PressureCanvasProps) {
+export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const scrollRateRef = useRef(scrollRate)
   const colorsRef = useRef(colors)
@@ -63,8 +64,9 @@ export function PressureCanvas({ scrollRate, colors }: PressureCanvasProps) {
         keys.forEach((key, i) => {
           const xOffset = i * (KEY_WIDTH + KEY_GAP)
           if (key.pressure === 0) return
-          const start = key.active ? c.activeStartColor : c.inactiveStartColor
-          const end = key.active ? c.activeEndColor : c.inactiveEndColor
+          const kc = key.colors ?? c
+          const start = key.active ? kc.activeStartColor : kc.inactiveStartColor
+          const end = key.active ? kc.activeEndColor : kc.inactiveEndColor
           ctx.fillStyle = lerpColor(start, end, key.pressure)
           ctx.fillRect(xOffset, h - 1, KEY_WIDTH, 1)
         })
@@ -81,5 +83,18 @@ export function PressureCanvas({ scrollRate, colors }: PressureCanvasProps) {
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="w-full h-full" />
+  return (
+    <div className="relative w-full h-full">
+      <canvas ref={canvasRef} className="w-full h-full" />
+      {fade.enabled && fade.height > 0 && (
+        <div
+          className="absolute top-0 left-0 w-full pointer-events-none"
+          style={{
+            height: fade.height,
+            background: 'linear-gradient(to bottom, black, transparent)',
+          }}
+        />
+      )}
+    </div>
+  )
 }
