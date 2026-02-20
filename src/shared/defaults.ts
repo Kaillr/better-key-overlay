@@ -1,10 +1,7 @@
 import type { AppSettings } from './types'
 
 export const defaultSettings: AppSettings = {
-  keys: [
-    { code: 'KeyZ', label: 'Z', analogKey: 0x1d, uiohookKeycode: 0 },
-    { code: 'KeyX', label: 'X', analogKey: 0x1b, uiohookKeycode: 0 },
-  ],
+  keys: [],
   scrollRate: 500,
   colors: {
     activeStartColor: '#ff0000',
