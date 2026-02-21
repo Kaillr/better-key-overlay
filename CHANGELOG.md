@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Kaillr/better-key-overlay/compare/v1.1.0...v1.2.0) (2026-02-21)
+
+
+### Features
+
+* add check for updates button in settings ([cfce320](https://github.com/Kaillr/better-key-overlay/commit/cfce320ba891720d5fb01c61128e7f251d0a4810))
+
 # [1.1.0](https://github.com/Kaillr/better-key-overlay/compare/v1.0.0...v1.1.0) (2026-02-21)
 
 
