@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/Kaillr/better-key-overlay/compare/v1.2.0...v1.2.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* use press-to-press interval for accurate CPS calculation ([d3ee0ca](https://github.com/Kaillr/better-key-overlay/commit/d3ee0cad8b2f230921a00efffdc68428a97e25b1))
+
 # [1.2.0](https://github.com/Kaillr/better-key-overlay/compare/v1.1.0...v1.2.0) (2026-02-21)
 
 
