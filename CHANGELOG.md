@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/Kaillr/better-key-overlay/compare/v1.2.1...v1.2.2) (2026-02-21)
+
+
+### Bug Fixes
+
+* prevent CPS/BPM text wrapping ([c441b9b](https://github.com/Kaillr/better-key-overlay/commit/c441b9bfdafd08971a3b1c5e8f57337f28ffc025))
+
 ## [1.2.1](https://github.com/Kaillr/better-key-overlay/compare/v1.2.0...v1.2.1) (2026-02-21)
 
 
