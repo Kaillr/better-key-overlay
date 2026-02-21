@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/Kaillr/better-key-overlay/compare/v1.2.2...v1.3.0) (2026-02-21)
+
+
+### Features
+
+* add counter position setting (bottom, left, right) ([76f569b](https://github.com/Kaillr/better-key-overlay/commit/76f569b5d5c70ad86f87d3ce5dd5dfa58808efc8))
+* add setting to disable pressure canvas ([6ad9f6a](https://github.com/Kaillr/better-key-overlay/commit/6ad9f6a3d099295dd218d012fbe7503cddb7ab39))
+* rename CPS to KPS (keys per second) ([b792f36](https://github.com/Kaillr/better-key-overlay/commit/b792f36d897d5e40050f27e2aed7dfbf9d87a061))
+
 ## [1.2.2](https://github.com/Kaillr/better-key-overlay/compare/v1.2.1...v1.2.2) (2026-02-21)
 
 
