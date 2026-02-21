@@ -11,11 +11,10 @@ function calculateCps(times: number[], now: number): number {
 
   if (times.length <= 1) return 0
 
-  const elapsed = now - times[0]
-  if (elapsed <= 0) return 0
+  const span = times[times.length - 1] - times[0]
+  if (span <= 0) return 0
 
-  // Count intervals between presses within the window
-  return (times.length - 1) / elapsed
+  return (times.length - 1) / span
 }
 
 export function useCps() {
