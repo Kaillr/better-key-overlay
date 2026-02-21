@@ -127,7 +127,7 @@ export function OverlayView(): React.JSX.Element {
           Settings
         </a>
       )}
-      {isSide && pos === 'left' && (
+      {isSide && pos === 'left' && hasCounters && (
         <div className="shrink-0 relative self-end" style={{ width: COUNTER_WIDTH, marginRight: KEY_GAP }}>
           {counterContent && (
             <div className="absolute right-0 bottom-0">{counterContent}</div>
@@ -135,17 +135,21 @@ export function OverlayView(): React.JSX.Element {
         </div>
       )}
       <div className="flex flex-col items-center min-h-0 h-full">
-        <div className="flex-1 min-h-0" style={{ width: canvasWidth }}>
-          <PressureCanvas scrollRate={settings.scrollRate} colors={settings.colors} fade={settings.fade} />
-        </div>
-        <div className="flex relative z-10" style={{ gap: KEY_GAP, marginTop: -settings.keyStyle.borderRadius }}>
+        {settings.showVisualizer ? (
+          <div className="flex-1 min-h-0" style={{ width: canvasWidth }}>
+            <PressureCanvas scrollRate={settings.scrollRate} colors={settings.colors} fade={settings.fade} />
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+        <div className="flex relative z-10" style={{ gap: KEY_GAP, marginTop: settings.showVisualizer ? -settings.keyStyle.borderRadius : 0 }}>
           {keys.map((key) => (
             <KeyPressure key={key.code} keyState={key} keyStyle={settings.keyStyle} />
           ))}
         </div>
-        {!isSide && <div className="pt-2">{counterContent}</div>}
+        {!isSide && counterContent && <div className="pt-2">{counterContent}</div>}
       </div>
-      {isSide && pos === 'right' && (
+      {isSide && pos === 'right' && hasCounters && (
         <div className="shrink-0 relative self-end" style={{ width: COUNTER_WIDTH, marginLeft: KEY_GAP }}>
           {counterContent && (
             <div className="absolute left-0 bottom-0">{counterContent}</div>

@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
 import { uIOhook } from 'uiohook-napi'
-import { contentWidth } from '../shared/config'
+import { contentWidth, noCanvasHeight } from '../shared/config'
 import { store } from './store'
 import { registerIpcHandlers } from './ipc'
 import { createTray } from './tray'
@@ -31,11 +31,19 @@ function hasSideCounter(settings: AppSettings): boolean {
   return (settings.showKps || settings.showBpm) && settings.counterPosition !== 'bottom'
 }
 
+function hasBottomCounter(settings: AppSettings): boolean {
+  return (settings.showKps || settings.showBpm) && settings.counterPosition === 'bottom'
+}
+
+function getWindowHeight(settings: AppSettings): number {
+  return settings.showVisualizer ? settings.windowHeight : noCanvasHeight(hasBottomCounter(settings))
+}
+
 function onConfigChanged(settings: AppSettings): void {
   rebuildTracking(settings)
   if (mainWindow && !mainWindow.isDestroyed()) {
     const boundKeys = settings.keys.filter((k) => k.code).length
-    mainWindow.setContentSize(contentWidth(boundKeys, hasSideCounter(settings)), settings.windowHeight)
+    mainWindow.setContentSize(contentWidth(boundKeys, hasSideCounter(settings)), getWindowHeight(settings))
   }
 }
 
@@ -44,7 +52,7 @@ function createWindow(): void {
   const keys = settings.keys
   mainWindow = new BrowserWindow({
     width: contentWidth(keys.filter((k) => k.code).length, hasSideCounter(settings)),
-    height: settings.windowHeight,
+    height: getWindowHeight(settings),
     resizable: false,
     useContentSize: true,
     show: false,

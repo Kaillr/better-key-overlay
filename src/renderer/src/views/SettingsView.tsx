@@ -216,9 +216,20 @@ export function SettingsView(): React.JSX.Element {
           <ColorPicker colors={settings.colors} onChange={(colors) => set({ colors })} />
         </Section>
 
-        <Section title="Scroll">
+        <Section title="Visualizer">
           <ItemGroup>
-            <ItemRow label="Speed">
+            <ItemRow label="Show visualizer">
+              <input
+                type="checkbox"
+                checked={settings.showVisualizer}
+                onChange={(e) => set({ showVisualizer: e.target.checked })}
+                className="w-4 h-4"
+              />
+            </ItemRow>
+            {settings.showVisualizer && (
+              <>
+                <ItemSeparator />
+                <ItemRow label="Speed">
               <input
                 type="range"
                 min={50}
@@ -262,12 +273,14 @@ export function SettingsView(): React.JSX.Element {
                 </ItemRow>
               </>
             )}
+              </>
+            )}
           </ItemGroup>
         </Section>
 
         <Section title="Display">
           <ItemGroup>
-            {isElectron && (
+            {isElectron && settings.showVisualizer && (
               <>
                 <ItemRow label="Window height">
                   <input

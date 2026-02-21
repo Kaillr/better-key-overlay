@@ -44,6 +44,7 @@ export interface AppSettings {
   showKps: boolean
   showBpm: boolean
   counterPosition: CounterPosition
+  showVisualizer: boolean
   keyStyle: KeyStyle
   fade: FadeConfig
   windowHeight: number
