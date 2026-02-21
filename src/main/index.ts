@@ -7,7 +7,7 @@ import { contentWidth } from '../shared/config'
 import { store } from './store'
 import { registerIpcHandlers } from './ipc'
 import { createTray } from './tray'
-import { openSettingsWindow } from './settingsWindow'
+import { openSettingsWindow, getSettingsWindow } from './settingsWindow'
 import type { AppSettings } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
@@ -99,7 +99,20 @@ function createWindow(): void {
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.kaillr.better-key-overlay')
 
-  autoUpdater.checkForUpdatesAndNotify()
+  const sendUpdateStatus = (status: string, info?: string): void => {
+    getSettingsWindow()?.webContents.send('update-status', { status, info })
+  }
+
+  if (app.isPackaged) {
+    autoUpdater.autoDownload = true
+    autoUpdater.on('checking-for-update', () => sendUpdateStatus('checking'))
+    autoUpdater.on('update-available', (info) => sendUpdateStatus('available', info.version))
+    autoUpdater.on('update-not-available', () => sendUpdateStatus('up-to-date'))
+    autoUpdater.on('download-progress', (progress) => sendUpdateStatus('downloading', `${Math.round(progress.percent)}%`))
+    autoUpdater.on('update-downloaded', (info) => sendUpdateStatus('ready', info.version))
+    autoUpdater.on('error', (err) => sendUpdateStatus('error', err.message))
+    autoUpdater.checkForUpdates()
+  }
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
@@ -108,6 +121,14 @@ app.whenReady().then(() => {
   rebuildTracking(store.store)
   registerIpcHandlers(() => mainWindow, onConfigChanged)
   createTray(() => openSettingsWindow(), () => app.quit())
+
+  ipcMain.handle('check-for-updates', () => {
+    if (app.isPackaged) autoUpdater.checkForUpdates()
+  })
+
+  ipcMain.handle('install-update', () => {
+    if (app.isPackaged) autoUpdater.quitAndInstall()
+  })
 
   // Key capture IPC: settings window requests capture, main waits for next uiohook keydown
   ipcMain.handle('settings:capture-key', () => {

@@ -29,6 +29,18 @@ function saveBrowserSettings(settings: AppSettings): void {
 export function SettingsView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [connectedDevices, setConnectedDevices] = useState<HIDDevice[]>([])
+  const [updateStatus, setUpdateStatus] = useState<{ status: string; info?: string } | null>(null)
+
+  useEffect(() => {
+    if (!ipcRenderer) return
+    const handler = (_e: unknown, data: { status: string; info?: string }): void => {
+      setUpdateStatus(data)
+    }
+    ipcRenderer.on('update-status', handler)
+    return () => {
+      ipcRenderer.removeListener('update-status', handler)
+    }
+  }, [])
 
   useEffect(() => {
     if (!navigator.hid) return
@@ -301,7 +313,34 @@ export function SettingsView(): React.JSX.Element {
           Reset to Defaults
         </button>
 
-        <p className="text-center text-xs text-neutral-600">v{__APP_VERSION__}</p>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-xs text-neutral-600">v{__APP_VERSION__}</p>
+          {isElectron && (
+            <div className="text-xs text-neutral-500">
+              {updateStatus?.status === 'checking' && 'Checking for updates...'}
+              {updateStatus?.status === 'available' && `Downloading v${updateStatus.info}...`}
+              {updateStatus?.status === 'downloading' && `Downloading... ${updateStatus.info}`}
+              {updateStatus?.status === 'up-to-date' && 'Up to date'}
+              {updateStatus?.status === 'error' && 'Update check failed'}
+              {updateStatus?.status === 'ready' && (
+                <button
+                  onClick={() => ipcRenderer!.invoke('install-update')}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  Install v{updateStatus.info} and restart
+                </button>
+              )}
+              {(!updateStatus || updateStatus.status === 'up-to-date' || updateStatus.status === 'error') && (
+                <button
+                  onClick={() => ipcRenderer!.invoke('check-for-updates')}
+                  className="text-neutral-500 hover:text-neutral-300 ml-2"
+                >
+                  Check for updates
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

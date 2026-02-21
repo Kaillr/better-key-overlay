@@ -35,3 +35,7 @@ export function openSettingsWindow(): void {
     settingsWindow = null
   })
 }
+
+export function getSettingsWindow(): BrowserWindow | null {
+  return settingsWindow
+}
