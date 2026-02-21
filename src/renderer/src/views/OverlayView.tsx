@@ -117,7 +117,7 @@ export function OverlayView(): React.JSX.Element {
         </div>
         <div className="py-2">
           {(settings.showCps || settings.showBpm) ? (
-            <span className="font-mono text-sm">
+            <span className="font-mono text-sm whitespace-nowrap">
               {[
                 settings.showCps && `${cps.toFixed(1)} CPS`,
                 settings.showBpm && `${bpm} BPM`,
