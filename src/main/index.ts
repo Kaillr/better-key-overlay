@@ -27,19 +27,24 @@ function rebuildTracking(settings: AppSettings): void {
   }
 }
 
+function hasSideCounter(settings: AppSettings): boolean {
+  return (settings.showKps || settings.showBpm) && settings.counterPosition !== 'bottom'
+}
+
 function onConfigChanged(settings: AppSettings): void {
   rebuildTracking(settings)
   if (mainWindow && !mainWindow.isDestroyed()) {
     const boundKeys = settings.keys.filter((k) => k.code).length
-    mainWindow.setContentSize(contentWidth(boundKeys), settings.windowHeight)
+    mainWindow.setContentSize(contentWidth(boundKeys, hasSideCounter(settings)), settings.windowHeight)
   }
 }
 
 function createWindow(): void {
-  const keys = store.get('keys')
+  const settings = store.store
+  const keys = settings.keys
   mainWindow = new BrowserWindow({
-    width: contentWidth(keys.filter((k) => k.code).length),
-    height: store.get('windowHeight'),
+    width: contentWidth(keys.filter((k) => k.code).length, hasSideCounter(settings)),
+    height: settings.windowHeight,
     resizable: false,
     useContentSize: true,
     show: false,

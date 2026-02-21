@@ -35,12 +35,15 @@ export interface FadeConfig {
   height: number // percentage of canvas height (0-100)
 }
 
+export type CounterPosition = 'bottom' | 'left' | 'right'
+
 export interface AppSettings {
   keys: KeyConfigEntry[]
   scrollRate: number
   colors: ColorConfig
   showKps: boolean
   showBpm: boolean
+  counterPosition: CounterPosition
   keyStyle: KeyStyle
   fade: FadeConfig
   windowHeight: number

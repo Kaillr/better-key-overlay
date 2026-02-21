@@ -286,6 +286,18 @@ export function SettingsView(): React.JSX.Element {
                 <ItemSeparator />
               </>
             )}
+            <ItemRow label="Counter position">
+              <select
+                value={settings.counterPosition}
+                onChange={(e) => set({ counterPosition: e.target.value as 'bottom' | 'left' | 'right' })}
+                className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5"
+              >
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </ItemRow>
+            <ItemSeparator />
             <ItemRow label="Show KPS">
               <input
                 type="checkbox"

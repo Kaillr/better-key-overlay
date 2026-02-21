@@ -12,6 +12,7 @@ export const defaultSettings: AppSettings = {
   },
   showKps: false,
   showBpm: false,
+  counterPosition: 'bottom',
   keyStyle: {
     active: {
       borderColor: ['#ffffff', '#ffffff'],
