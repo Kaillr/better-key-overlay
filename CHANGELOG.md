@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/Kaillr/better-key-overlay/compare/v1.0.0...v1.1.0) (2026-02-21)
+
+
+### Bug Fixes
+
+* add publish config for auto-updater ([984573d](https://github.com/Kaillr/better-key-overlay/commit/984573d679fccc9b5f2bf40de7ed9ce43c66b9ed))
+* correct CPS calculation formula ([f1a2af7](https://github.com/Kaillr/better-key-overlay/commit/f1a2af73086038b61ab6da12016a470f997be920))
+
+
+### Features
+
+* show app version in settings ([d8e0641](https://github.com/Kaillr/better-key-overlay/commit/d8e064169e711954f657d9ff6245947660853f60))
+
 # 1.0.0 (2026-02-21)
 
 
