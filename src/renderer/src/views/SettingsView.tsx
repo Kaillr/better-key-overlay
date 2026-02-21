@@ -300,6 +300,8 @@ export function SettingsView(): React.JSX.Element {
         >
           Reset to Defaults
         </button>
+
+        <p className="text-center text-xs text-neutral-600">v{__APP_VERSION__}</p>
       </div>
     </div>
   )
