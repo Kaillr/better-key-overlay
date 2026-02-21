@@ -10,7 +10,7 @@ export const defaultSettings: AppSettings = {
     inactiveEndColor: '#00ff00',
     gradient: false,
   },
-  showCps: false,
+  showKps: false,
   showBpm: false,
   keyStyle: {
     active: {

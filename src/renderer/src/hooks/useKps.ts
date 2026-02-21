@@ -3,8 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 const TIME_WINDOW = 1 // seconds
 const UPDATE_INTERVAL = 100 // ms
 
-function calculateCps(times: number[], now: number): number {
-  // Prune timestamps older than the window
+function calculateKps(times: number[], now: number): number {
   while (times.length > 0 && now - times[0] >= TIME_WINDOW) {
     times.shift()
   }
@@ -17,9 +16,9 @@ function calculateCps(times: number[], now: number): number {
   return (times.length - 1) / span
 }
 
-export function useCps() {
+export function useKps() {
   const timesRef = useRef<number[]>([])
-  const [cps, setCps] = useState(0)
+  const [kps, setKps] = useState(0)
 
   const recordPress = useCallback(() => {
     timesRef.current.push(performance.now() / 1000)
@@ -28,11 +27,11 @@ export function useCps() {
   useEffect(() => {
     const interval = setInterval(() => {
       const now = performance.now() / 1000
-      setCps(calculateCps(timesRef.current, now))
+      setKps(calculateKps(timesRef.current, now))
     }, UPDATE_INTERVAL)
 
     return () => clearInterval(interval)
   }, [])
 
-  return { cps, recordPress }
+  return { kps, recordPress }
 }

@@ -286,11 +286,11 @@ export function SettingsView(): React.JSX.Element {
                 <ItemSeparator />
               </>
             )}
-            <ItemRow label="Show CPS">
+            <ItemRow label="Show KPS">
               <input
                 type="checkbox"
-                checked={settings.showCps}
-                onChange={(e) => set({ showCps: e.target.checked })}
+                checked={settings.showKps}
+                onChange={(e) => set({ showKps: e.target.checked })}
                 className="w-4 h-4"
               />
             </ItemRow>

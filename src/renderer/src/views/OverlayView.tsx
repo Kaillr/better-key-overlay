@@ -3,7 +3,7 @@ import { PressureCanvas } from '../components/PressureCanvas'
 import { KeyPressure } from '../components/KeyPressure'
 import { type AnalogReport } from '../lib/wooting'
 import { keys, rebuildKeys } from '../lib/pressureStore'
-import { useCps } from '../hooks/useCps'
+import { useKps } from '../hooks/useKps'
 import { useKeyboard } from '../hooks/useKeyboard'
 import { useDevice } from '../hooks/useDevice'
 import { KEY_WIDTH, KEY_GAP } from '../../../shared/config'
@@ -14,7 +14,7 @@ const ipcRenderer = window.electron?.ipcRenderer
 
 export function OverlayView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const { cps, recordPress } = useCps()
+  const { kps, recordPress } = useKps()
   useKeyboard(recordPress)
 
   const applySettings = (s: AppSettings): void => {
@@ -94,7 +94,7 @@ export function OverlayView(): React.JSX.Element {
   }
 
   const canvasWidth = KEY_WIDTH * keys.length + KEY_GAP * (keys.length - 1)
-  const bpm = ((cps * 60) / 4).toFixed(0)
+  const bpm = ((kps * 60) / 4).toFixed(0)
 
   return (
     <div className="h-screen w-screen bg-black text-white flex flex-col items-center px-4 overflow-hidden relative select-none">
@@ -116,10 +116,10 @@ export function OverlayView(): React.JSX.Element {
           ))}
         </div>
         <div className="py-2">
-          {(settings.showCps || settings.showBpm) ? (
+          {(settings.showKps || settings.showBpm) ? (
             <span className="font-mono text-sm whitespace-nowrap">
               {[
-                settings.showCps && `${cps.toFixed(1)} CPS`,
+                settings.showKps && `${kps.toFixed(1)} KPS`,
                 settings.showBpm && `${bpm} BPM`,
               ]
                 .filter(Boolean)

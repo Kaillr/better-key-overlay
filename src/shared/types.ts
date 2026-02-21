@@ -39,7 +39,7 @@ export interface AppSettings {
   keys: KeyConfigEntry[]
   scrollRate: number
   colors: ColorConfig
-  showCps: boolean
+  showKps: boolean
   showBpm: boolean
   keyStyle: KeyStyle
   fade: FadeConfig
