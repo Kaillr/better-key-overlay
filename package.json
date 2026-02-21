@@ -1,6 +1,6 @@
 {
   "name": "better-key-overlay",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Wooting analog key pressure overlay",
   "main": "./out/main/index.js",
   "author": "Kaillr",
