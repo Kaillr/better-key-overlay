@@ -68,6 +68,11 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Set version
+        shell: bash
+        run: npm version ${{ needs.check.outputs.version }} --no-git-tag-version
+
       - run: pnpm run build
 
       - name: Build Electron app
