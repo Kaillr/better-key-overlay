@@ -9,14 +9,13 @@ function calculateCps(times: number[], now: number): number {
     times.shift()
   }
 
-  if (times.length === 0) return 0
-  if (times.length === 1) return 1
+  if (times.length <= 1) return 0
 
-  const totalTime = times[times.length - 1] - times[0]
-  const weight = TIME_WINDOW - totalTime / TIME_WINDOW
-  const denominator = totalTime + (TIME_WINDOW - totalTime) * weight
+  const elapsed = now - times[0]
+  if (elapsed <= 0) return 0
 
-  return times.length / denominator
+  // Count intervals between presses within the window
+  return (times.length - 1) / elapsed
 }
 
 export function useCps() {
