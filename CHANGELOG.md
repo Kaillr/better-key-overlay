@@ -1,3 +1,11 @@
+## [1.4.3](https://github.com/Kaillr/better-key-overlay/compare/v1.4.2...v1.4.3) (2026-02-26)
+
+
+### Bug Fixes
+
+* filter DrunkDeer devices by usage page to avoid duplicate connections ([a19f67d](https://github.com/Kaillr/better-key-overlay/commit/a19f67d5dedece9ab1b1eee07f50f23794bb9b5b))
+* send identity handshake before DrunkDeer tracking command ([f3f1cac](https://github.com/Kaillr/better-key-overlay/commit/f3f1cacc1eb6b4e95a423ac552cae4b5508ed4a7))
+
 ## [1.4.2](https://github.com/Kaillr/better-key-overlay/compare/v1.4.1...v1.4.2) (2026-02-26)
 
 
