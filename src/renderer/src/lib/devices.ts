@@ -179,6 +179,10 @@ export async function initDevice(device: HIDDevice): Promise<void> {
     initWooting(device)
   } else if (isDrunkDeer(device)) {
     initDrunkDeer(device)
+    // DrunkDeer requires a command to start streaming pressure data
+    const cmd = new Uint8Array(63)
+    cmd[0] = 253; cmd[1] = 7; cmd[2] = 1
+    await device.sendReport(4, cmd)
   }
 }
 
