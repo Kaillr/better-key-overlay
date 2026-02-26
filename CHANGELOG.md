@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/Kaillr/better-key-overlay/compare/v1.4.3...v1.5.0) (2026-02-26)
+
+
+### Features
+
+* integrate AnalogSense.js SDK for multi-brand analog keyboard support ([b4e33f2](https://github.com/Kaillr/better-key-overlay/commit/b4e33f24fcd5ddbcaeddf383e0c2bbe961c0a8ab))
+
 ## [1.4.3](https://github.com/Kaillr/better-key-overlay/compare/v1.4.2...v1.4.3) (2026-02-26)
 
 
