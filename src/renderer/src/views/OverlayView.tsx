@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { PressureCanvas } from '../components/PressureCanvas'
 import { KeyPressure } from '../components/KeyPressure'
-import { type AnalogReport } from '../lib/wooting'
+import { type AnalogReport } from '../lib/devices'
 import { keys, rebuildKeys } from '../lib/pressureStore'
 import { useKps } from '../hooks/useKps'
 import { useKeyboard } from '../hooks/useKeyboard'

@@ -75,7 +75,8 @@ function createWindow(): void {
 
   mainWindow.webContents.session.on('select-hid-device', (event, details, callback) => {
     event.preventDefault()
-    const device = details.deviceList.find((d) => d.vendorId === 0x31e3)
+    const ANALOG_VIDS = [0x31e3, 6645, 13613, 1452, 6785]
+    const device = details.deviceList.find((d) => ANALOG_VIDS.includes(d.vendorId))
     callback(device?.deviceId ?? '')
   })
 
@@ -86,7 +87,8 @@ function createWindow(): void {
 
   mainWindow.webContents.session.setDevicePermissionHandler((details) => {
     if (details.deviceType === 'hid' && details.device && 'vendorId' in details.device) {
-      return (details.device as { vendorId: number }).vendorId === 0x31e3
+      const vid = (details.device as { vendorId: number }).vendorId
+      return [0x31e3, 6645, 13613, 1452, 6785].includes(vid)
     }
     return false
   })

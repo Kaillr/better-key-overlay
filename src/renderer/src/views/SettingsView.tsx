@@ -5,7 +5,7 @@ import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
 import { Section, ItemGroup, ItemRow, ItemSeparator } from '../components/settings/SettingsLayout'
 import { defaultSettings } from '../../../shared/defaults'
 import { deriveLabel, getAnalogKey } from '../../../shared/keyMappings'
-import { WOOT_VID, WOOT_ANALOG_USAGE } from '../lib/wooting'
+import { DEVICE_FILTERS, isAnalogDevice } from '../lib/devices'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
@@ -48,7 +48,7 @@ export function SettingsView(): React.JSX.Element {
       navigator.hid.getDevices().then((devices) => {
         setConnectedDevices(
           devices.filter(
-            (d) => d.vendorId === WOOT_VID && d.collections[0]?.usagePage === WOOT_ANALOG_USAGE
+            isAnalogDevice
           )
         )
       })
@@ -144,13 +144,13 @@ export function SettingsView(): React.JSX.Element {
   const connectDevice = useCallback(async () => {
     if (!navigator.hid) return
     await navigator.hid.requestDevice({
-      filters: [{ vendorId: WOOT_VID, usagePage: WOOT_ANALOG_USAGE }],
+      filters: DEVICE_FILTERS,
     })
     // Refresh the list
     const devices = await navigator.hid.getDevices()
     setConnectedDevices(
       devices.filter(
-        (d) => d.vendorId === WOOT_VID && d.collections[0]?.usagePage === WOOT_ANALOG_USAGE
+        isAnalogDevice
       )
     )
   }, [])

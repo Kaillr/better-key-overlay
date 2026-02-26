@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { WOOT_VID, WOOT_ANALOG_USAGE, initDevice } from '../lib/wooting'
+import { DEVICE_FILTERS, initDevice, isAnalogDevice } from '../lib/devices'
 
 export function useDevice(
   onConnect: (device: HIDDevice) => void,
@@ -25,10 +25,8 @@ export function useDevice(
     initRef.current = true
 
     navigator.hid.getDevices().then(async (allDevices) => {
-      const wootDevices = allDevices.filter(
-        (d) => d.vendorId === WOOT_VID && d.collections[0]?.usagePage === WOOT_ANALOG_USAGE
-      )
-      for (const dev of wootDevices) {
+      const analogDevices = allDevices.filter(isAnalogDevice)
+      for (const dev of analogDevices) {
         await addDevice(dev)
       }
     })
@@ -51,7 +49,7 @@ export function useDevice(
   const requestDev = useCallback(async () => {
     if (!navigator.hid) return
     const selected = await navigator.hid.requestDevice({
-      filters: [{ vendorId: WOOT_VID, usagePage: WOOT_ANALOG_USAGE }],
+      filters: DEVICE_FILTERS,
     })
     for (const dev of selected) {
       await addDevice(dev)
