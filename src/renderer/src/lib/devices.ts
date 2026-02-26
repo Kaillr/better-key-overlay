@@ -111,7 +111,10 @@ function isWooting(device: HIDDevice): boolean {
 }
 
 function isDrunkDeer(device: HIDDevice): boolean {
-  return DD_VIDS.includes(device.vendorId)
+  return (
+    DD_VIDS.includes(device.vendorId) &&
+    device.collections.some((c) => c.usagePage === DD_USAGE_PAGE)
+  )
 }
 
 function initWooting(device: HIDDevice): void {
