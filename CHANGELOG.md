@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/Kaillr/better-key-overlay/compare/v1.4.0...v1.4.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* send start command to DrunkDeer to enable pressure streaming ([4059c02](https://github.com/Kaillr/better-key-overlay/commit/4059c0209434fb5035464eb20ab11cce62fb88ae))
+
 # [1.4.0](https://github.com/Kaillr/better-key-overlay/compare/v1.3.0...v1.4.0) (2026-02-26)
 
 
