@@ -21,8 +21,8 @@ export function openSettingsWindow(): void {
     backgroundColor: '#171717',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-    },
+      sandbox: false
+    }
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

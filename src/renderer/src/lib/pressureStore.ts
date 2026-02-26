@@ -8,18 +8,19 @@ export interface KeyState extends KeyConfigEntry {
 export const keys: KeyState[] = []
 
 export function rebuildKeys(configs: KeyConfigEntry[]): void {
-  const prevState = new Map(keys.map((k) => [k.code, k]))
+  const prev = [...keys]
   keys.length = 0
-  for (const config of configs.filter((c) => c.code)) {
-    const prev = prevState.get(config.code)
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i]
+    if (!config.code) continue
     keys.push({
       ...config,
-      active: prev?.active ?? false,
-      analogPressure: prev?.analogPressure ?? 0,
+      active: prev[i]?.active ?? false,
+      analogPressure: prev[i]?.analogPressure ?? 0
     })
   }
 }
 
-export function getKey(code: string): KeyState | undefined {
-  return keys.find((k) => k.code === code)
+export function getKeys(code: string): KeyState[] {
+  return keys.filter((k) => k.code === code)
 }

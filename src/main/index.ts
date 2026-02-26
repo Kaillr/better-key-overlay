@@ -36,14 +36,19 @@ function hasBottomCounter(settings: AppSettings): boolean {
 }
 
 function getWindowHeight(settings: AppSettings): number {
-  return settings.showVisualizer ? settings.windowHeight : noCanvasHeight(hasBottomCounter(settings))
+  return settings.showVisualizer
+    ? settings.windowHeight
+    : noCanvasHeight(hasBottomCounter(settings))
 }
 
 function onConfigChanged(settings: AppSettings): void {
   rebuildTracking(settings)
   if (mainWindow && !mainWindow.isDestroyed()) {
     const boundKeys = settings.keys.filter((k) => k.code).length
-    mainWindow.setContentSize(contentWidth(boundKeys, hasSideCounter(settings)), getWindowHeight(settings))
+    mainWindow.setContentSize(
+      contentWidth(boundKeys, hasSideCounter(settings)),
+      getWindowHeight(settings)
+    )
   }
 }
 
@@ -60,8 +65,8 @@ function createWindow(): void {
     backgroundColor: '#000000',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-    },
+      sandbox: false
+    }
   })
 
   mainWindow.on('ready-to-show', () => {
@@ -75,8 +80,7 @@ function createWindow(): void {
 
   mainWindow.webContents.session.on('select-hid-device', (event, details, callback) => {
     event.preventDefault()
-    const ANALOG_VIDS = [0x31e3, 6645, 13613, 1452, 6785]
-    const device = details.deviceList.find((d) => ANALOG_VIDS.includes(d.vendorId))
+    const device = details.deviceList[0]
     callback(device?.deviceId ?? '')
   })
 
@@ -86,11 +90,7 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.session.setDevicePermissionHandler((details) => {
-    if (details.deviceType === 'hid' && details.device && 'vendorId' in details.device) {
-      const vid = (details.device as { vendorId: number }).vendorId
-      return [0x31e3, 6645, 13613, 1452, 6785].includes(vid)
-    }
-    return false
+    return details.deviceType === 'hid'
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -99,9 +99,9 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.on('context-menu', () => {
-    Menu.buildFromTemplate([
-      { label: 'Settings', click: () => openSettingsWindow() },
-    ]).popup({ window: mainWindow! })
+    Menu.buildFromTemplate([{ label: 'Settings', click: () => openSettingsWindow() }]).popup({
+      window: mainWindow!
+    })
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -123,7 +123,9 @@ app.whenReady().then(() => {
     autoUpdater.on('checking-for-update', () => sendUpdateStatus('checking'))
     autoUpdater.on('update-available', (info) => sendUpdateStatus('available', info.version))
     autoUpdater.on('update-not-available', () => sendUpdateStatus('up-to-date'))
-    autoUpdater.on('download-progress', (progress) => sendUpdateStatus('downloading', `${Math.round(progress.percent)}%`))
+    autoUpdater.on('download-progress', (progress) =>
+      sendUpdateStatus('downloading', `${Math.round(progress.percent)}%`)
+    )
     autoUpdater.on('update-downloaded', (info) => sendUpdateStatus('ready', info.version))
     autoUpdater.on('error', (err) => sendUpdateStatus('error', err.message))
     autoUpdater.checkForUpdates()
@@ -135,7 +137,10 @@ app.whenReady().then(() => {
 
   rebuildTracking(store.store)
   registerIpcHandlers(() => mainWindow, onConfigChanged)
-  createTray(() => openSettingsWindow(), () => app.quit())
+  createTray(
+    () => openSettingsWindow(),
+    () => app.quit()
+  )
 
   ipcMain.handle('check-for-updates', () => {
     if (app.isPackaged) autoUpdater.checkForUpdates()

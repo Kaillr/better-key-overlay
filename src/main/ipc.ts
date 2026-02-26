@@ -32,7 +32,7 @@ export function registerIpcHandlers(
       code: '',
       label: '',
       analogKey: 0,
-      uiohookKeycode: 0,
+      uiohookKeycode: 0
     }
     store.set('keys', [...store.get('keys'), entry])
     return notify(getOverlayWindow, onConfigChanged)
@@ -48,7 +48,7 @@ export function registerIpcHandlers(
         code: data.code,
         label: deriveLabel(data.code),
         analogKey: getAnalogKey(data.code),
-        uiohookKeycode: data.uiohookKeycode,
+        uiohookKeycode: data.uiohookKeycode
       }
       store.set('keys', keys)
       return notify(getOverlayWindow, onConfigChanged)

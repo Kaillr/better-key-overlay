@@ -17,23 +17,41 @@ export function ColorPicker({ colors, onChange }: ColorPickerProps) {
       {colors.gradient ? (
         <>
           <ItemRow label="Active">
-            <HexColorInput value={colors.activeStartColor} onChange={(v) => update({ activeStartColor: v })} />
-            <HexColorInput value={colors.activeEndColor} onChange={(v) => update({ activeEndColor: v })} />
+            <HexColorInput
+              value={colors.activeStartColor}
+              onChange={(v) => update({ activeStartColor: v })}
+            />
+            <HexColorInput
+              value={colors.activeEndColor}
+              onChange={(v) => update({ activeEndColor: v })}
+            />
           </ItemRow>
           <ItemSeparator />
           <ItemRow label="Inactive">
-            <HexColorInput value={colors.inactiveStartColor} onChange={(v) => update({ inactiveStartColor: v })} />
-            <HexColorInput value={colors.inactiveEndColor} onChange={(v) => update({ inactiveEndColor: v })} />
+            <HexColorInput
+              value={colors.inactiveStartColor}
+              onChange={(v) => update({ inactiveStartColor: v })}
+            />
+            <HexColorInput
+              value={colors.inactiveEndColor}
+              onChange={(v) => update({ inactiveEndColor: v })}
+            />
           </ItemRow>
         </>
       ) : (
         <>
           <ItemRow label="Active">
-            <HexColorInput value={colors.activeEndColor} onChange={(v) => update({ activeEndColor: v })} />
+            <HexColorInput
+              value={colors.activeEndColor}
+              onChange={(v) => update({ activeEndColor: v })}
+            />
           </ItemRow>
           <ItemSeparator />
           <ItemRow label="Inactive">
-            <HexColorInput value={colors.inactiveStartColor} onChange={(v) => update({ inactiveStartColor: v })} />
+            <HexColorInput
+              value={colors.inactiveStartColor}
+              onChange={(v) => update({ inactiveStartColor: v })}
+            />
           </ItemRow>
         </>
       )}

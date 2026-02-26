@@ -15,17 +15,6 @@ export function KeyList({ keys, onRemove, onRecord }: KeyListProps) {
   const captureRef = useRef<Promise<number> | null>(null)
   const prevLengthRef = useRef(keys.length)
 
-  // Auto-start recording when a new unassigned key is added
-  useEffect(() => {
-    if (keys.length > prevLengthRef.current) {
-      const lastIndex = keys.length - 1
-      if (!keys[lastIndex].code) {
-        startRecording(lastIndex)
-      }
-    }
-    prevLengthRef.current = keys.length
-  }, [keys.length])
-
   const startRecording = (index: number) => {
     captureRef.current = ipcRenderer?.invoke('settings:capture-key') as Promise<number>
     setRecordingIndex(index)
@@ -56,6 +45,17 @@ export function KeyList({ keys, onRemove, onRecord }: KeyListProps) {
     return () => window.removeEventListener('keydown', handler)
   }, [recordingIndex, onRecord])
 
+  // Auto-start recording when a new unassigned key is added
+  useEffect(() => {
+    if (keys.length > prevLengthRef.current) {
+      const lastIndex = keys.length - 1
+      if (!keys[lastIndex].code) {
+        startRecording(lastIndex)
+      }
+    }
+    prevLengthRef.current = keys.length
+  }, [keys.length])
+
   if (keys.length === 0) return null
 
   return (
@@ -74,17 +74,12 @@ export function KeyList({ keys, onRemove, onRecord }: KeyListProps) {
               )}
             </span>
             <button
-              onClick={() =>
-                recordingIndex === i ? cancelRecording() : startRecording(i)
-              }
+              onClick={() => (recordingIndex === i ? cancelRecording() : startRecording(i))}
               className="px-3 py-1.5 text-xs rounded-lg border border-neutral-600 hover:border-neutral-500 bg-neutral-800"
             >
               {recordingIndex === i ? 'Cancel' : 'Record Keybind'}
             </button>
-            <button
-              onClick={() => onRemove(i)}
-              className="text-red-400 hover:text-red-300 text-xs"
-            >
+            <button onClick={() => onRemove(i)} className="text-red-400 hover:text-red-300 text-xs">
               Remove
             </button>
           </div>

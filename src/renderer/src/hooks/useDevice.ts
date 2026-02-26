@@ -1,44 +1,42 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DEVICE_FILTERS, initDevice, isAnalogDevice } from '../lib/devices'
+import { getDevices, requestDevice, type AnalogDevice } from '../lib/devices'
 
 export function useDevice(
-  onConnect: (device: HIDDevice) => void,
+  onAnalogData: (data: { scancode: number; value: number }[]) => void,
   onDisconnect: () => void
-): { devices: HIDDevice[]; requestDevice: (() => void) | null } {
-  const [devices, setDevices] = useState<HIDDevice[]>([])
+): { devices: AnalogDevice[]; requestNewDevice: (() => void) | null } {
+  const [devices, setDevices] = useState<AnalogDevice[]>([])
   const initRef = useRef(false)
 
   const addDevice = useCallback(
-    async (dev: HIDDevice) => {
-      await initDevice(dev)
+    (dev: AnalogDevice) => {
+      dev.startListening(onAnalogData)
       setDevices((prev) => {
-        if (prev.some((d) => d === dev)) return prev
+        if (prev.some((d) => d.hidDevice === dev.hidDevice)) return prev
         return [...prev, dev]
       })
-      onConnect(dev)
     },
-    [onConnect]
+    [onAnalogData]
   )
 
   useEffect(() => {
-    if (initRef.current || !navigator.hid) return
+    if (initRef.current) return
     initRef.current = true
 
-    navigator.hid.getDevices().then(async (allDevices) => {
-      const analogDevices = allDevices.filter(isAnalogDevice)
-      for (const dev of analogDevices) {
-        await addDevice(dev)
+    getDevices().then((devs) => {
+      for (const dev of devs) {
+        addDevice(dev)
       }
     })
   }, [addDevice])
 
   useEffect(() => {
     if (!navigator.hid) return
-    const handler = async (event: HIDConnectionEvent) => {
-      const dev = event.device
-      if (devices.includes(dev)) {
-        await dev.close()
-        setDevices((prev) => prev.filter((d) => d !== dev))
+    const handler = (event: HIDConnectionEvent) => {
+      const disconnected = devices.find((d) => d.hidDevice === event.device)
+      if (disconnected) {
+        disconnected.stopListening()
+        setDevices((prev) => prev.filter((d) => d.hidDevice !== event.device))
         onDisconnect()
       }
     }
@@ -47,19 +45,14 @@ export function useDevice(
   }, [devices, onDisconnect])
 
   const requestDev = useCallback(async () => {
-    if (!navigator.hid) return
-    const selected = await navigator.hid.requestDevice({
-      filters: DEVICE_FILTERS,
-    })
-    for (const dev of selected) {
-      await addDevice(dev)
-    }
+    const dev = await requestDevice()
+    if (dev) addDevice(dev)
   }, [addDevice])
 
   const isElectron = !!window.electron?.ipcRenderer
 
   return {
     devices,
-    requestDevice: !isElectron && navigator.hid ? requestDev : null,
+    requestNewDevice: !isElectron && navigator.hid ? requestDev : null
   }
 }

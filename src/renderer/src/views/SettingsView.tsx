@@ -5,7 +5,7 @@ import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
 import { Section, ItemGroup, ItemRow, ItemSeparator } from '../components/settings/SettingsLayout'
 import { defaultSettings } from '../../../shared/defaults'
 import { deriveLabel, getAnalogKey } from '../../../shared/keyMappings'
-import { DEVICE_FILTERS, isAnalogDevice } from '../lib/devices'
+import { getDevices, requestDevice, type AnalogDevice } from '../lib/devices'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
@@ -28,7 +28,7 @@ function saveBrowserSettings(settings: AppSettings): void {
 
 export function SettingsView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const [connectedDevices, setConnectedDevices] = useState<HIDDevice[]>([])
+  const [connectedDevices, setConnectedDevices] = useState<AnalogDevice[]>([])
   const [updateStatus, setUpdateStatus] = useState<{ status: string; info?: string } | null>(null)
 
   useEffect(() => {
@@ -43,15 +43,8 @@ export function SettingsView(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
-    if (!navigator.hid) return
     const refresh = () => {
-      navigator.hid.getDevices().then((devices) => {
-        setConnectedDevices(
-          devices.filter(
-            isAnalogDevice
-          )
-        )
-      })
+      getDevices().then(setConnectedDevices)
     }
     refresh()
     const interval = setInterval(refresh, 2000)
@@ -66,21 +59,18 @@ export function SettingsView(): React.JSX.Element {
     }
   }, [])
 
-  const set = useCallback(
-    async (partial: Partial<AppSettings>) => {
-      if (isElectron) {
-        const updated = await ipcRenderer!.invoke('settings:set', partial)
-        setSettings(updated)
-      } else {
-        setSettings((prev) => {
-          const updated = { ...prev!, ...partial }
-          saveBrowserSettings(updated)
-          return updated
-        })
-      }
-    },
-    []
-  )
+  const set = useCallback(async (partial: Partial<AppSettings>) => {
+    if (isElectron) {
+      const updated = await ipcRenderer!.invoke('settings:set', partial)
+      setSettings(updated)
+    } else {
+      setSettings((prev) => {
+        const updated = { ...prev!, ...partial }
+        saveBrowserSettings(updated)
+        return updated
+      })
+    }
+  }, [])
 
   const addKey = useCallback(async () => {
     if (isElectron) {
@@ -90,7 +80,7 @@ export function SettingsView(): React.JSX.Element {
       setSettings((prev) => {
         const updated = {
           ...prev!,
-          keys: [...prev!.keys, { code: '', label: '', analogKey: 0, uiohookKeycode: 0 }],
+          keys: [...prev!.keys, { code: '', label: '', analogKey: 0, uiohookKeycode: 0 }]
         }
         saveBrowserSettings(updated)
         return updated
@@ -119,7 +109,7 @@ export function SettingsView(): React.JSX.Element {
           index,
           code,
           key,
-          uiohookKeycode,
+          uiohookKeycode
         })
         setSettings(updated)
       } else {
@@ -130,7 +120,7 @@ export function SettingsView(): React.JSX.Element {
             code,
             label: deriveLabel(code),
             analogKey: getAnalogKey(code),
-            uiohookKeycode: 0,
+            uiohookKeycode: 0
           }
           const updated = { ...prev!, keys }
           saveBrowserSettings(updated)
@@ -142,17 +132,11 @@ export function SettingsView(): React.JSX.Element {
   )
 
   const connectDevice = useCallback(async () => {
-    if (!navigator.hid) return
-    await navigator.hid.requestDevice({
-      filters: DEVICE_FILTERS,
-    })
-    // Refresh the list
-    const devices = await navigator.hid.getDevices()
-    setConnectedDevices(
-      devices.filter(
-        isAnalogDevice
-      )
-    )
+    const dev = await requestDevice()
+    if (dev) {
+      const devs = await getDevices()
+      setConnectedDevices(devs)
+    }
   }, [])
 
   if (!settings) return <div className="h-screen bg-neutral-900" />
@@ -186,7 +170,7 @@ export function SettingsView(): React.JSX.Element {
               connectedDevices.map((dev, i) => (
                 <div key={i}>
                   {i > 0 && <ItemSeparator />}
-                  <ItemRow label={dev.productName || 'Unknown device'} description="Connected" />
+                  <ItemRow label={dev.getProductName()} description="Connected" />
                 </div>
               ))
             ) : (
@@ -230,49 +214,49 @@ export function SettingsView(): React.JSX.Element {
               <>
                 <ItemSeparator />
                 <ItemRow label="Speed">
-              <input
-                type="range"
-                min={50}
-                max={1000}
-                step={50}
-                value={settings.scrollRate}
-                onChange={(e) => set({ scrollRate: Number(e.target.value) })}
-                className="w-24"
-              />
-              <span className="text-xs text-neutral-500 w-14 text-right">
-                {settings.scrollRate} px/s
-              </span>
-            </ItemRow>
-            <ItemSeparator />
-            <ItemRow label="Fade out at top">
-              <input
-                type="checkbox"
-                checked={settings.fade.enabled}
-                onChange={(e) => set({ fade: { ...settings.fade, enabled: e.target.checked } })}
-                className="w-4 h-4"
-              />
-            </ItemRow>
-            {settings.fade.enabled && (
-              <>
-                <ItemSeparator />
-                <ItemRow label="Fade height">
                   <input
                     type="range"
-                    min={5}
-                    max={100}
-                    step={5}
-                    value={settings.fade.height}
-                    onChange={(e) =>
-                      set({ fade: { ...settings.fade, height: Number(e.target.value) } })
-                    }
+                    min={50}
+                    max={1000}
+                    step={50}
+                    value={settings.scrollRate}
+                    onChange={(e) => set({ scrollRate: Number(e.target.value) })}
                     className="w-24"
                   />
-                  <span className="text-xs text-neutral-500 w-10 text-right">
-                    {settings.fade.height}%
+                  <span className="text-xs text-neutral-500 w-14 text-right">
+                    {settings.scrollRate} px/s
                   </span>
                 </ItemRow>
-              </>
-            )}
+                <ItemSeparator />
+                <ItemRow label="Fade out at top">
+                  <input
+                    type="checkbox"
+                    checked={settings.fade.enabled}
+                    onChange={(e) => set({ fade: { ...settings.fade, enabled: e.target.checked } })}
+                    className="w-4 h-4"
+                  />
+                </ItemRow>
+                {settings.fade.enabled && (
+                  <>
+                    <ItemSeparator />
+                    <ItemRow label="Fade height">
+                      <input
+                        type="range"
+                        min={5}
+                        max={100}
+                        step={5}
+                        value={settings.fade.height}
+                        onChange={(e) =>
+                          set({ fade: { ...settings.fade, height: Number(e.target.value) } })
+                        }
+                        className="w-24"
+                      />
+                      <span className="text-xs text-neutral-500 w-10 text-right">
+                        {settings.fade.height}%
+                      </span>
+                    </ItemRow>
+                  </>
+                )}
               </>
             )}
           </ItemGroup>
@@ -302,7 +286,9 @@ export function SettingsView(): React.JSX.Element {
             <ItemRow label="Counter position">
               <select
                 value={settings.counterPosition}
-                onChange={(e) => set({ counterPosition: e.target.value as 'bottom' | 'left' | 'right' })}
+                onChange={(e) =>
+                  set({ counterPosition: e.target.value as 'bottom' | 'left' | 'right' })
+                }
                 className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5"
               >
                 <option value="bottom">Bottom</option>
@@ -355,7 +341,9 @@ export function SettingsView(): React.JSX.Element {
                   Install v{updateStatus.info} and restart
                 </button>
               )}
-              {(!updateStatus || updateStatus.status === 'up-to-date' || updateStatus.status === 'error') && (
+              {(!updateStatus ||
+                updateStatus.status === 'up-to-date' ||
+                updateStatus.status === 'error') && (
                 <button
                   onClick={() => ipcRenderer!.invoke('check-for-updates')}
                   className="text-neutral-500 hover:text-neutral-300 ml-2"

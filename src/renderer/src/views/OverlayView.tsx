@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { PressureCanvas } from '../components/PressureCanvas'
 import { KeyPressure } from '../components/KeyPressure'
-import { type AnalogReport } from '../lib/devices'
 import { keys, rebuildKeys } from '../lib/pressureStore'
 import { useKps } from '../hooks/useKps'
 import { useKeyboard } from '../hooks/useKeyboard'
@@ -56,12 +55,10 @@ export function OverlayView(): React.JSX.Element {
     }
   }, [])
 
-  const onConnect = useCallback((dev: HIDDevice) => {
-    dev.onanalogreport = (report: AnalogReport) => {
-      for (const key of keys) {
-        const val = report.data.find((k) => k.key === key.analogKey)?.value ?? 0
-        key.analogPressure = val
-      }
+  const onAnalogData = useCallback((activeKeys: { scancode: number; value: number }[]) => {
+    for (const key of keys) {
+      const match = activeKeys.find((k) => k.scancode === key.analogKey)
+      key.analogPressure = match?.value ?? 0
     }
   }, [])
 
@@ -71,7 +68,7 @@ export function OverlayView(): React.JSX.Element {
     }
   }, [])
 
-  useDevice(onConnect, onDisconnect)
+  useDevice(onAnalogData, onDisconnect)
 
   if (!settings) return <div className="h-screen w-screen bg-black" />
 
@@ -101,16 +98,15 @@ export function OverlayView(): React.JSX.Element {
 
   const counterContent = hasCounters ? (
     isSide ? (
-      <div className={`flex flex-col font-mono text-sm whitespace-nowrap tabular-nums ${pos === 'right' ? 'text-left' : 'text-right'}`}>
+      <div
+        className={`flex flex-col font-mono text-sm whitespace-nowrap tabular-nums ${pos === 'right' ? 'text-left' : 'text-right'}`}
+      >
         {settings.showKps && <span>{kps.toFixed(1)} KPS</span>}
         {settings.showBpm && <span>{bpm} BPM</span>}
       </div>
     ) : (
       <span className="font-mono text-sm whitespace-nowrap tabular-nums">
-        {[
-          settings.showKps && `${kps.toFixed(1)} KPS`,
-          settings.showBpm && `${bpm} BPM`,
-        ]
+        {[settings.showKps && `${kps.toFixed(1)} KPS`, settings.showBpm && `${bpm} BPM`]
           .filter(Boolean)
           .join(' / ')}
       </span>
@@ -128,21 +124,32 @@ export function OverlayView(): React.JSX.Element {
         </a>
       )}
       {isSide && pos === 'left' && hasCounters && (
-        <div className="shrink-0 relative self-end" style={{ width: COUNTER_WIDTH, marginRight: KEY_GAP }}>
-          {counterContent && (
-            <div className="absolute right-0 bottom-0">{counterContent}</div>
-          )}
+        <div
+          className="shrink-0 relative self-end"
+          style={{ width: COUNTER_WIDTH, marginRight: KEY_GAP }}
+        >
+          {counterContent && <div className="absolute right-0 bottom-0">{counterContent}</div>}
         </div>
       )}
       <div className="flex flex-col items-center min-h-0 h-full">
         {settings.showVisualizer ? (
           <div className="flex-1 min-h-0" style={{ width: canvasWidth }}>
-            <PressureCanvas scrollRate={settings.scrollRate} colors={settings.colors} fade={settings.fade} />
+            <PressureCanvas
+              scrollRate={settings.scrollRate}
+              colors={settings.colors}
+              fade={settings.fade}
+            />
           </div>
         ) : (
           <div className="flex-1" />
         )}
-        <div className="flex relative z-10" style={{ gap: KEY_GAP, marginTop: settings.showVisualizer ? -settings.keyStyle.borderRadius : 0 }}>
+        <div
+          className="flex relative z-10"
+          style={{
+            gap: KEY_GAP,
+            marginTop: settings.showVisualizer ? -settings.keyStyle.borderRadius : 0
+          }}
+        >
           {keys.map((key) => (
             <KeyPressure key={key.code} keyState={key} keyStyle={settings.keyStyle} />
           ))}
@@ -150,10 +157,11 @@ export function OverlayView(): React.JSX.Element {
         {!isSide && counterContent && <div className="pt-2">{counterContent}</div>}
       </div>
       {isSide && pos === 'right' && hasCounters && (
-        <div className="shrink-0 relative self-end" style={{ width: COUNTER_WIDTH, marginLeft: KEY_GAP }}>
-          {counterContent && (
-            <div className="absolute left-0 bottom-0">{counterContent}</div>
-          )}
+        <div
+          className="shrink-0 relative self-end"
+          style={{ width: COUNTER_WIDTH, marginLeft: KEY_GAP }}
+        >
+          {counterContent && <div className="absolute left-0 bottom-0">{counterContent}</div>}
         </div>
       )}
     </div>

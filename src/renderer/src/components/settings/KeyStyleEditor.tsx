@@ -15,7 +15,7 @@ function PropertyGroup({
   prop,
   gradientProp,
   keyStyle,
-  onChange,
+  onChange
 }: {
   label: string
   prop: StyleProp
@@ -30,7 +30,7 @@ function PropertyGroup({
     onChange({
       ...keyStyle,
       active: { ...active, [gradientProp]: enabled },
-      inactive: { ...inactive, [gradientProp]: enabled },
+      inactive: { ...inactive, [gradientProp]: enabled }
     })
   }
 
@@ -95,9 +95,27 @@ function PropertyGroup({
 export function KeyStyleEditor({ keyStyle, onChange }: KeyStyleEditorProps) {
   return (
     <div className="flex flex-col gap-3">
-      <PropertyGroup label="border" prop="borderColor" gradientProp="borderColorGradient" keyStyle={keyStyle} onChange={onChange} />
-      <PropertyGroup label="background" prop="backgroundColor" gradientProp="backgroundColorGradient" keyStyle={keyStyle} onChange={onChange} />
-      <PropertyGroup label="text" prop="textColor" gradientProp="textColorGradient" keyStyle={keyStyle} onChange={onChange} />
+      <PropertyGroup
+        label="border"
+        prop="borderColor"
+        gradientProp="borderColorGradient"
+        keyStyle={keyStyle}
+        onChange={onChange}
+      />
+      <PropertyGroup
+        label="background"
+        prop="backgroundColor"
+        gradientProp="backgroundColorGradient"
+        keyStyle={keyStyle}
+        onChange={onChange}
+      />
+      <PropertyGroup
+        label="text"
+        prop="textColor"
+        gradientProp="textColorGradient"
+        keyStyle={keyStyle}
+        onChange={onChange}
+      />
       <ItemGroup>
         <ItemRow label="Border width">
           <input

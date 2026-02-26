@@ -53,7 +53,7 @@ export function KeyPressure({ keyState, keyStyle }: KeyPressureProps) {
         width: KEY_WIDTH,
         borderRadius: keyStyle.borderRadius,
         borderStyle: 'solid',
-        borderWidth: keyStyle.borderWidth,
+        borderWidth: keyStyle.borderWidth
       }}
     >
       {keyState.label}

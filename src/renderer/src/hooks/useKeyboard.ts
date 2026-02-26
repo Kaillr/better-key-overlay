@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react'
-import { getKey } from '../lib/pressureStore'
+import { getKeys } from '../lib/pressureStore'
 
 const ipcRenderer = window.electron?.ipcRenderer
 
@@ -8,11 +8,13 @@ export function useKeyboard(recordPress: () => void): void {
 
   useEffect(() => {
     const handleKey = (code: string, pressed: boolean): void => {
-      const key = getKey(code)
-      if (!key) return
-      if (pressed && key.active) return
+      const matching = getKeys(code)
+      if (matching.length === 0) return
+      if (pressed && matching.every((k) => k.active)) return
       if (pressed) recordPress()
-      key.active = pressed
+      for (const key of matching) {
+        key.active = pressed
+      }
       forceRender()
     }
 

@@ -8,7 +8,7 @@ export const defaultSettings: AppSettings = {
     activeEndColor: '#ffffff',
     inactiveStartColor: '#ff0000',
     inactiveEndColor: '#00ff00',
-    gradient: false,
+    gradient: false
   },
   showKps: false,
   showBpm: false,
@@ -21,7 +21,7 @@ export const defaultSettings: AppSettings = {
       backgroundColor: ['#171717', '#404040'],
       backgroundColorGradient: true,
       textColor: ['#ffffff', '#ffffff'],
-      textColorGradient: false,
+      textColorGradient: false
     },
     inactive: {
       borderColor: ['#404040', '#404040'],
@@ -29,14 +29,14 @@ export const defaultSettings: AppSettings = {
       backgroundColor: ['#171717', '#404040'],
       backgroundColorGradient: true,
       textColor: ['#ffffff', '#ffffff'],
-      textColorGradient: false,
+      textColorGradient: false
     },
     borderWidth: 6,
-    borderRadius: 22,
+    borderRadius: 22
   },
   fade: {
     enabled: true,
-    height: 50,
+    height: 50
   },
-  windowHeight: 720,
+  windowHeight: 720
 }

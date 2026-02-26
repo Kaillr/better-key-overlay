@@ -115,7 +115,7 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
           className="absolute top-0 left-0 w-full pointer-events-none"
           style={{
             height: `${fade.height}%`,
-            background: 'linear-gradient(to bottom, black, transparent)',
+            background: 'linear-gradient(to bottom, black, transparent)'
           }}
         />
       )}

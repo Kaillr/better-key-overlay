@@ -8,7 +8,7 @@ export function createTray(onOpenSettings: () => void, onQuit: () => void): Tray
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Settings', click: onOpenSettings },
     { type: 'separator' },
-    { label: 'Quit', click: onQuit },
+    { label: 'Quit', click: onQuit }
   ])
 
   tray.setToolTip('Better Key Overlay')
