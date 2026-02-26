@@ -15,7 +15,7 @@ A customizable key overlay with analog pressure visualization.
 - Scrolling pressure visualization with customizable colors and speed
 - Pressure-reactive key buttons
 - KPS & BPM counter
-- Works with any keyboard - full analog support for Wooting and DrunkDeer devices
+- Works with any keyboard — full analog support for many analog devices
 - Fully customizable through the settings window
 
 ## Download
@@ -42,7 +42,16 @@ xattr -cr /Applications/Better\ Key\ Overlay.app
 2. **Customize** — Adjust colors, key styles, scroll speed, fade effect, and more in settings
 3. **Stream** — Use OBS window capture to add the overlay. Set the blend mode to **Add** to remove the black background
 
-## Verified Analog Devices
+## Supported Analog Devices
 
-- **Wooting** — All models (60HE, 80HE, Two HE, UWU, etc.)
-- **DrunkDeer** — All rapid trigger models
+Analog pressure visualization is powered by [AnalogSense.js](https://analogsense.org/).
+
+- **Wooting** — All models
+- **DrunkDeer** — All models
+- **Razer** — Huntsman V2 Analog, Huntsman Mini Analog, Huntsman V3 Pro series
+- **NuPhy** — All analog models
+- **Keychron** — Q1 HE, Q3 HE, Q5 HE, K2 HE
+- **Lemokey** — P1 HE
+- **Madlions** — MAD60HE, MAD68HE, MAD68R
+
+Also works with any standard keyboard (without pressure visualization).
