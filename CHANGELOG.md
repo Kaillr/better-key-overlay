@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/Kaillr/better-key-overlay/compare/v1.4.1...v1.4.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* use correct DrunkDeer keystroke tracking start command ([f9fc490](https://github.com/Kaillr/better-key-overlay/commit/f9fc49084a62c155c95099d8a6216e0999b97618))
+
 ## [1.4.1](https://github.com/Kaillr/better-key-overlay/compare/v1.4.0...v1.4.1) (2026-02-26)
 
 
