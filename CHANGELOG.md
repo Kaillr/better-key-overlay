@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/Kaillr/better-key-overlay/compare/v1.3.0...v1.4.0) (2026-02-26)
+
+
+### Features
+
+* add DrunkDeer analog keyboard support ([e1c405f](https://github.com/Kaillr/better-key-overlay/commit/e1c405fdd5906c9a311533354c21478dbebc265d))
+
 # [1.3.0](https://github.com/Kaillr/better-key-overlay/compare/v1.2.2...v1.3.0) (2026-02-21)
 
 
