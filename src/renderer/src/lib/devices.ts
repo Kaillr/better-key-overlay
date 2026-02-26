@@ -182,10 +182,15 @@ export async function initDevice(device: HIDDevice): Promise<void> {
     initWooting(device)
   } else if (isDrunkDeer(device)) {
     initDrunkDeer(device)
-    // DrunkDeer requires a command to start keystroke tracking
-    const cmd = new Uint8Array(63)
-    cmd[0] = 253; cmd[1] = 3; cmd[2] = 1
-    await device.sendReport(4, cmd)
+    // DrunkDeer requires a handshake then a start command for keystroke tracking
+    const identity = new Uint8Array(63)
+    identity[0] = 160; identity[1] = 2
+    await device.sendReport(4, identity)
+    // Wait for device to process identity request
+    await new Promise((r) => setTimeout(r, 100))
+    const start = new Uint8Array(63)
+    start[0] = 253; start[1] = 3; start[2] = 1
+    await device.sendReport(4, start)
   }
 }
 
