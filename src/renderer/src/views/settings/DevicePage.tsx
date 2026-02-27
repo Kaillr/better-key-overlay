@@ -46,9 +46,15 @@ export function DevicePage() {
   }, [])
 
   const handleAdd = useCallback((dev: HIDDevice) => {
-    addCustomDevice({ vendorId: dev.vendorId, productId: dev.productId, name: dev.productName || 'Unknown device' })
+    addCustomDevice({
+      vendorId: dev.vendorId,
+      productId: dev.productId,
+      name: dev.productName || 'Unknown device'
+    })
     setCustomDevices(getCustomDevices())
-    setAvailableHidDevices((prev) => prev.filter((d) => d.vendorId !== dev.vendorId || d.productId !== dev.productId))
+    setAvailableHidDevices((prev) =>
+      prev.filter((d) => d.vendorId !== dev.vendorId || d.productId !== dev.productId)
+    )
     notifyOverlay()
   }, [])
 
@@ -77,7 +83,9 @@ export function DevicePage() {
 
       {navigator.hid && (
         <div className="flex flex-col gap-2">
-          <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">Unsupported devices</span>
+          <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">
+            Unsupported devices
+          </span>
           <ItemGroup>
             {customDevices.map((dev, i) => (
               <div key={`${dev.vendorId}:${dev.productId}`}>
@@ -104,9 +112,13 @@ export function DevicePage() {
                 }}
                 className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 max-w-[200px]"
               >
-                <option value="" disabled>Select device</option>
+                <option value="" disabled>
+                  Select device
+                </option>
                 {availableHidDevices.map((d, i) => (
-                  <option key={i} value={i}>{d.productName} (0x{d.vendorId.toString(16)})</option>
+                  <option key={i} value={i}>
+                    {d.productName} (0x{d.vendorId.toString(16)})
+                  </option>
                 ))}
               </select>
               {!isElectron && (
@@ -123,7 +135,8 @@ export function DevicePage() {
             </ItemRow>
           </ItemGroup>
           <p className="text-xs text-neutral-600 px-1">
-            If your analog keyboard isn't detected, add it here. If it doesn't work, use Device Diagnostics below to export info and open an issue on GitHub.
+            If your analog keyboard isn&apos;t detected, add it here. If it doesn&apos;t work, use
+            Device Diagnostics below to export info and open an issue on GitHub.
           </p>
         </div>
       )}

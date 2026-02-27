@@ -83,40 +83,45 @@ export function DeviceDiagnostics() {
     await refreshDevices()
   }, [refreshDevices])
 
-  const connectTo = useCallback(async (dev: HIDDevice) => {
-    for (const d of connectedDevices) {
-      d.removeEventListener('inputreport', handleReport)
-      if (d.opened) await d.close()
-    }
+  const connectTo = useCallback(
+    async (dev: HIDDevice) => {
+      for (const d of connectedDevices) {
+        d.removeEventListener('inputreport', handleReport)
+        if (d.opened) await d.close()
+      }
 
-    const interfaces = allDevicesRef.current.filter(
-      (d) => d.vendorId === dev.vendorId && d.productId === dev.productId && d.productName === dev.productName
-    )
+      const interfaces = allDevicesRef.current.filter(
+        (d) =>
+          d.vendorId === dev.vendorId &&
+          d.productId === dev.productId &&
+          d.productName === dev.productName
+      )
 
-    const allCollections: HIDCollectionInfo[] = []
-    const opened: HIDDevice[] = []
-    for (const d of interfaces) {
-      try {
-        if (!d.opened) await d.open()
-        d.addEventListener('inputreport', handleReport)
-        opened.push(d)
-        allCollections.push(...(d.collections as unknown as HIDCollectionInfo[]))
-      } catch {}
-    }
+      const allCollections: HIDCollectionInfo[] = []
+      const opened: HIDDevice[] = []
+      for (const d of interfaces) {
+        try {
+          if (!d.opened) await d.open()
+          d.addEventListener('inputreport', handleReport)
+          opened.push(d)
+          allCollections.push(...(d.collections as unknown as HIDCollectionInfo[]))
+        } catch {}
+      }
 
-    setConnectedDevices(opened)
-    setDeviceInfo({
-      vendorId: dev.vendorId,
-      productId: dev.productId,
-      name: dev.productName || 'Unknown device',
-      collections: allCollections
-    })
-    setReportCount(0)
-    setLiveBytes([])
-    setChangedIndices(new Set())
-    prevReport.current = []
-    latestReport.current = null
-  }, [connectedDevices, handleReport])
+      setConnectedDevices(opened)
+      setDeviceInfo({
+        vendorId: dev.vendorId,
+        productId: dev.productId,
+        name: dev.productName || 'Unknown device',
+        collections: allCollections
+      })
+      setReportCount(0)
+      setLiveBytes([])
+      setChangedIndices(new Set())
+      latestReport.current = null
+    },
+    [connectedDevices, handleReport]
+  )
 
   const disconnect = useCallback(() => {
     for (const d of connectedDevices) {
@@ -129,7 +134,6 @@ export function DeviceDiagnostics() {
     setLiveReportId(0)
     setChangedIndices(new Set())
     setReportCount(0)
-    prevReport.current = []
     latestReport.current = null
   }, [connectedDevices, handleReport])
 
@@ -163,7 +167,7 @@ export function DeviceDiagnostics() {
     a.download = `${deviceInfo?.name ?? 'device'}-diagnostic.json`
     a.click()
     URL.revokeObjectURL(a.href)
-  }, [deviceInfo])
+  }, [deviceInfo, reportCount])
 
   if (!navigator.hid) return null
 
@@ -195,9 +199,13 @@ export function DeviceDiagnostics() {
                     }}
                     className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 max-w-[200px]"
                   >
-                    <option value="" disabled>Choose a device</option>
+                    <option value="" disabled>
+                      Choose a device
+                    </option>
                     {availableDevices.map((d, i) => (
-                      <option key={i} value={i}>{d.label}</option>
+                      <option key={i} value={i}>
+                        {d.label}
+                      </option>
                     ))}
                   </select>
                 )}
@@ -223,9 +231,21 @@ export function DeviceDiagnostics() {
                 <ItemSeparator />
                 <div className="px-4 py-3 flex flex-col gap-2">
                   <div className="flex gap-4 text-[11px]">
-                    <span className="text-neutral-500">Vendor <span className="text-neutral-400 font-mono">{formatHex(deviceInfo!.vendorId)}</span></span>
-                    <span className="text-neutral-500">Product <span className="text-neutral-400 font-mono">{formatHex(deviceInfo!.productId)}</span></span>
-                    <span className="text-neutral-500">Reports <span className="text-neutral-400 font-mono">{reportCount}</span></span>
+                    <span className="text-neutral-500">
+                      Vendor{' '}
+                      <span className="text-neutral-400 font-mono">
+                        {formatHex(deviceInfo!.vendorId)}
+                      </span>
+                    </span>
+                    <span className="text-neutral-500">
+                      Product{' '}
+                      <span className="text-neutral-400 font-mono">
+                        {formatHex(deviceInfo!.productId)}
+                      </span>
+                    </span>
+                    <span className="text-neutral-500">
+                      Reports <span className="text-neutral-400 font-mono">{reportCount}</span>
+                    </span>
                   </div>
                   {deviceInfo!.collections.length > 0 && (
                     <div className="flex flex-col gap-1">
@@ -233,7 +253,8 @@ export function DeviceDiagnostics() {
                       {deviceInfo!.collections.map((c, i) => (
                         <span key={i} className="text-[10px] text-neutral-600 font-mono">
                           Page: {formatHex(c.usagePage)} Usage: {formatHex(c.usage)}
-                          {c.inputReports?.length > 0 && ` | Input: [${c.inputReports.map((r) => r.reportId).join(', ')}]`}
+                          {c.inputReports?.length > 0 &&
+                            ` | Input: [${c.inputReports.map((r) => r.reportId).join(', ')}]`}
                         </span>
                       ))}
                     </div>
@@ -244,7 +265,9 @@ export function DeviceDiagnostics() {
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-neutral-500">Live report</span>
                     {liveBytes.length > 0 && (
-                      <span className="text-[10px] text-neutral-600 font-mono">ID: {liveReportId} ({liveBytes.length} bytes)</span>
+                      <span className="text-[10px] text-neutral-600 font-mono">
+                        ID: {liveReportId} ({liveBytes.length} bytes)
+                      </span>
                     )}
                   </div>
                   {liveBytes.length > 0 ? (

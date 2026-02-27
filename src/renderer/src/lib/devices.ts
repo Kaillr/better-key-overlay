@@ -37,13 +37,16 @@ export function getCustomDevices(): CustomDeviceConfig[] {
 
 export function addCustomDevice(config: CustomDeviceConfig): void {
   const devices = getCustomDevices()
-  if (devices.some((d) => d.vendorId === config.vendorId && d.productId === config.productId)) return
+  if (devices.some((d) => d.vendorId === config.vendorId && d.productId === config.productId))
+    return
   devices.push(config)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(devices))
 }
 
 export function removeCustomDevice(vendorId: number, productId: number): void {
-  const devices = getCustomDevices().filter((d) => d.vendorId !== vendorId || d.productId !== productId)
+  const devices = getCustomDevices().filter(
+    (d) => d.vendorId !== vendorId || d.productId !== productId
+  )
   localStorage.setItem(STORAGE_KEY, JSON.stringify(devices))
 }
 
@@ -66,7 +69,7 @@ function createGenericDevice(dev: HIDDevice): AnalogDevice {
       }
     },
     stopListening() {
-      dev.oninputreport = undefined
+      dev.oninputreport = null
     }
   }
 }
@@ -81,8 +84,8 @@ async function connectCustomDevices(exclude: Set<string>): Promise<AnalogDevice[
     const candidates = allHid
       .filter((d) => d.vendorId === config.vendorId && d.productId === config.productId)
       .sort((a, b) => {
-        const aVendor = a.collections.some((c) => c.usagePage >= 0xff00) ? 1 : 0
-        const bVendor = b.collections.some((c) => c.usagePage >= 0xff00) ? 1 : 0
+        const aVendor = a.collections.some((c) => (c.usagePage ?? 0) >= 0xff00) ? 1 : 0
+        const bVendor = b.collections.some((c) => (c.usagePage ?? 0) >= 0xff00) ? 1 : 0
         return bVendor - aVendor
       })
     for (const dev of candidates) {
@@ -102,7 +105,9 @@ async function connectCustomDevices(exclude: Set<string>): Promise<AnalogDevice[
 export async function getDevices(): Promise<AnalogDevice[]> {
   if (!navigator.hid) return []
   const supported: AnalogDevice[] = await analogsense.getDevices()
-  const supportedIds = new Set(supported.map((d: AnalogDevice) => `${d.hidDevice.vendorId}:${d.hidDevice.productId}`))
+  const supportedIds = new Set(
+    supported.map((d: AnalogDevice) => `${d.hidDevice.vendorId}:${d.hidDevice.productId}`)
+  )
   const custom = await connectCustomDevices(supportedIds)
   return [...supported, ...custom]
 }

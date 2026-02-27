@@ -14,27 +14,30 @@ import type { AppSettings, Preset } from '../../../shared/types'
 const ipcRenderer = window.electron?.ipcRenderer
 const isElectron = !!ipcRenderer
 
-function migrateColors(colors: Record<string, unknown>): AppSettings['colors'] {
-  const c = colors as AppSettings['colors'] & { activeEndColor?: string; inactiveStartColor?: string }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateColors(colors: any): AppSettings['colors'] {
   return {
-    activeColor: c.activeColor ?? c.activeEndColor ?? defaultSettings.colors.activeColor,
-    inactiveColor: c.inactiveColor ?? c.inactiveStartColor ?? defaultSettings.colors.inactiveColor,
-    gradient: c.gradient ?? false,
-    ...(c.gradient ? {
-      activeStartColor: c.activeStartColor,
-      activeEndColor: c.activeEndColor,
-      inactiveStartColor: c.inactiveStartColor,
-      inactiveEndColor: c.inactiveEndColor
-    } : {})
+    activeColor: colors.activeColor ?? colors.activeEndColor ?? defaultSettings.colors.activeColor,
+    inactiveColor:
+      colors.inactiveColor ?? colors.inactiveStartColor ?? defaultSettings.colors.inactiveColor,
+    gradient: colors.gradient ?? false,
+    ...(colors.gradient
+      ? {
+          activeStartColor: colors.activeStartColor,
+          activeEndColor: colors.activeEndColor,
+          inactiveStartColor: colors.inactiveStartColor,
+          inactiveEndColor: colors.inactiveEndColor
+        }
+      : {})
   }
 }
 
-function migrateSettings(raw: Record<string, unknown>): AppSettings {
-  const s = raw as AppSettings
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateSettings(raw: any): AppSettings {
   return {
     ...defaultSettings,
-    ...s,
-    colors: s.colors ? migrateColors(s.colors as unknown as Record<string, unknown>) : defaultSettings.colors
+    ...raw,
+    colors: raw.colors ? migrateColors(raw.colors) : defaultSettings.colors
   }
 }
 
@@ -44,7 +47,10 @@ function loadBrowserPresets(): { presets: Preset[]; activePresetId: string } {
     if (stored) {
       const data = JSON.parse(stored)
       data.presets = deduplicatePresetNames(
-        data.presets.map((p: Preset) => ({ ...p, settings: migrateSettings(p.settings as unknown as Record<string, unknown>) }))
+        data.presets.map((p: Preset) => ({
+          ...p,
+          settings: migrateSettings(p.settings as unknown as Record<string, unknown>)
+        }))
       )
       return data
     }
@@ -99,10 +105,12 @@ export function SettingsView(): React.JSX.Element {
   useEffect(() => {
     if (isElectron) {
       ipcRenderer!.invoke('settings:get').then(setSettings)
-      ipcRenderer!.invoke('presets:list').then((data: { presets: Preset[]; activePresetId: string }) => {
-        setPresets(data.presets)
-        setActivePresetId(data.activePresetId)
-      })
+      ipcRenderer!
+        .invoke('presets:list')
+        .then((data: { presets: Preset[]; activePresetId: string }) => {
+          setPresets(data.presets)
+          setActivePresetId(data.activePresetId)
+        })
     } else {
       const data = loadBrowserPresets()
       setPresets(data.presets)
@@ -140,7 +148,7 @@ export function SettingsView(): React.JSX.Element {
       setSettings((prev) => {
         const updated = {
           ...prev!,
-          keys: [...prev!.keys, { code: '', label: '', analogKey: 0, uiohookKeycode: 0 }],
+          keys: [...prev!.keys, { code: '', label: '', analogKey: 0, uiohookKeycode: 0 }]
         }
         return updated
       })
@@ -148,15 +156,18 @@ export function SettingsView(): React.JSX.Element {
     }
   }, [settings, set])
 
-  const removeKey = useCallback(async (index: number) => {
-    if (isElectron) {
-      await ipcRenderer!.invoke('settings:remove-key', { index })
-      const updated = await ipcRenderer!.invoke('settings:get')
-      setSettings(updated)
-    } else {
-      set({ keys: settings!.keys.filter((_, i) => i !== index) })
-    }
-  }, [settings, set])
+  const removeKey = useCallback(
+    async (index: number) => {
+      if (isElectron) {
+        await ipcRenderer!.invoke('settings:remove-key', { index })
+        const updated = await ipcRenderer!.invoke('settings:get')
+        setSettings(updated)
+      } else {
+        set({ keys: settings!.keys.filter((_, i) => i !== index) })
+      }
+    },
+    [settings, set]
+  )
 
   const recordKey = useCallback(
     async (index: number, code: string, key: string, uiohookKeycode: number) => {
@@ -165,7 +176,7 @@ export function SettingsView(): React.JSX.Element {
           index,
           code,
           key,
-          uiohookKeycode,
+          uiohookKeycode
         })
         setSettings(updated)
       } else {
@@ -175,7 +186,7 @@ export function SettingsView(): React.JSX.Element {
           code,
           label: deriveLabel(code),
           analogKey: getAnalogKey(code),
-          uiohookKeycode: 0,
+          uiohookKeycode: 0
         }
         set({ keys })
       }
@@ -212,7 +223,9 @@ export function SettingsView(): React.JSX.Element {
       const id = crypto.randomUUID()
       setPresets((prev) => {
         setActivePresetId((activeId) => {
-          const settings = fromDefaults ? { ...defaultSettings } : getActiveFromPresets(prev, activeId)
+          const settings = fromDefaults
+            ? { ...defaultSettings }
+            : getActiveFromPresets(prev, activeId)
           const newPreset: Preset = { id, name, settings }
           const updated = [...prev, newPreset]
           setPresets(updated)
@@ -273,23 +286,26 @@ export function SettingsView(): React.JSX.Element {
     }
   }, [set])
 
-  const presetExport = useCallback(async (id: string) => {
-    if (isElectron) {
-      await ipcRenderer!.invoke('presets:export', id)
-    } else {
-      const preset = presets.find((p) => p.id === id)
-      if (!preset) return
-      const blob = new Blob(
-        [JSON.stringify({ name: preset.name, settings: preset.settings }, null, 2)],
-        { type: 'application/json' }
-      )
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = `${preset.name}.json`
-      a.click()
-      URL.revokeObjectURL(a.href)
-    }
-  }, [presets])
+  const presetExport = useCallback(
+    async (id: string) => {
+      if (isElectron) {
+        await ipcRenderer!.invoke('presets:export', id)
+      } else {
+        const preset = presets.find((p) => p.id === id)
+        if (!preset) return
+        const blob = new Blob(
+          [JSON.stringify({ name: preset.name, settings: preset.settings }, null, 2)],
+          { type: 'application/json' }
+        )
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = `${preset.name}.json`
+        a.click()
+        URL.revokeObjectURL(a.href)
+      }
+    },
+    [presets]
+  )
 
   const presetImport = useCallback(async () => {
     if (isElectron) {

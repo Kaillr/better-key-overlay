@@ -89,7 +89,9 @@ export function registerIpcHandlers(
   })
 
   ipcMain.handle('presets:rename', (_event, data: { id: string; name: string }) => {
-    const presets = store.get('presets').map((p) => (p.id === data.id ? { ...p, name: data.name } : p))
+    const presets = store
+      .get('presets')
+      .map((p) => (p.id === data.id ? { ...p, name: data.name } : p))
     store.set('presets', presets)
     return { presets, activePresetId: store.get('activePresetId') }
   })
@@ -121,7 +123,10 @@ export function registerIpcHandlers(
       filters: [{ name: 'JSON', extensions: ['json'] }]
     })
     if (result.canceled || !result.filePath) return false
-    writeFileSync(result.filePath, JSON.stringify({ name: preset.name, settings: preset.settings }, null, 2))
+    writeFileSync(
+      result.filePath,
+      JSON.stringify({ name: preset.name, settings: preset.settings }, null, 2)
+    )
     return true
   })
 

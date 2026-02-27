@@ -58,41 +58,43 @@ function PropertyGroup({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">{title}</span>
+      <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">
+        {title}
+      </span>
       <ItemGroup>
-      {gradient ? (
-        <>
-          <ItemRow label={`Active ${label}`}>
-            <HexColorInput value={active[prop][0]} onChange={(v) => setActivePair(0, v)} />
-            <HexColorInput value={active[prop][1]} onChange={(v) => setActivePair(1, v)} />
-          </ItemRow>
-          <ItemSeparator />
-          <ItemRow label={`Inactive ${label}`}>
-            <HexColorInput value={inactive[prop][0]} onChange={(v) => setInactivePair(0, v)} />
-            <HexColorInput value={inactive[prop][1]} onChange={(v) => setInactivePair(1, v)} />
-          </ItemRow>
-        </>
-      ) : (
-        <>
-          <ItemRow label={`Active ${label}`}>
-            <HexColorInput value={active[prop][1]} onChange={setActiveBoth} />
-          </ItemRow>
-          <ItemSeparator />
-          <ItemRow label={`Inactive ${label}`}>
-            <HexColorInput value={inactive[prop][0]} onChange={setInactiveBoth} />
-          </ItemRow>
-        </>
-      )}
-      <ItemSeparator />
-      <ItemRow label="Pressure gradient">
-        <input
-          type="checkbox"
-          checked={gradient}
-          onChange={(e) => toggleGradient(e.target.checked)}
-          className="w-4 h-4"
-        />
-      </ItemRow>
-    </ItemGroup>
+        {gradient ? (
+          <>
+            <ItemRow label={`Active ${label}`}>
+              <HexColorInput value={active[prop][0]} onChange={(v) => setActivePair(0, v)} />
+              <HexColorInput value={active[prop][1]} onChange={(v) => setActivePair(1, v)} />
+            </ItemRow>
+            <ItemSeparator />
+            <ItemRow label={`Inactive ${label}`}>
+              <HexColorInput value={inactive[prop][0]} onChange={(v) => setInactivePair(0, v)} />
+              <HexColorInput value={inactive[prop][1]} onChange={(v) => setInactivePair(1, v)} />
+            </ItemRow>
+          </>
+        ) : (
+          <>
+            <ItemRow label={`Active ${label}`}>
+              <HexColorInput value={active[prop][1]} onChange={setActiveBoth} />
+            </ItemRow>
+            <ItemSeparator />
+            <ItemRow label={`Inactive ${label}`}>
+              <HexColorInput value={inactive[prop][0]} onChange={setInactiveBoth} />
+            </ItemRow>
+          </>
+        )}
+        <ItemSeparator />
+        <ItemRow label="Pressure gradient">
+          <input
+            type="checkbox"
+            checked={gradient}
+            onChange={(e) => toggleGradient(e.target.checked)}
+            className="w-4 h-4"
+          />
+        </ItemRow>
+      </ItemGroup>
     </div>
   )
 }

@@ -69,14 +69,37 @@ export function PresetsPage({
               autoFocus
               className="flex-1 text-sm bg-neutral-700 border border-neutral-600 rounded px-2 py-0.5 outline-none focus:border-neutral-500"
             />
-            <button onClick={() => setRenaming(false)} className="text-xs text-neutral-500 hover:text-neutral-300 px-2 py-1">Cancel</button>
+            <button
+              onClick={() => setRenaming(false)}
+              className="text-xs text-neutral-500 hover:text-neutral-300 px-2 py-1"
+            >
+              Cancel
+            </button>
           </div>
         ) : (
           <ItemRow label="Active preset">
-            <button onClick={() => { setRenameName(activePreset.name); setRenaming(true) }} className="text-xs text-neutral-500 hover:text-neutral-300 px-1.5 py-1">Rename</button>
-            <button onClick={() => onExport(activePresetId)} className="text-xs text-neutral-500 hover:text-neutral-300 px-1.5 py-1">Export</button>
+            <button
+              onClick={() => {
+                setRenameName(activePreset.name)
+                setRenaming(true)
+              }}
+              className="text-xs text-neutral-500 hover:text-neutral-300 px-1.5 py-1"
+            >
+              Rename
+            </button>
+            <button
+              onClick={() => onExport(activePresetId)}
+              className="text-xs text-neutral-500 hover:text-neutral-300 px-1.5 py-1"
+            >
+              Export
+            </button>
             {presets.length > 1 && (
-              <button onClick={() => onDelete(activePresetId)} className="text-xs text-red-400/70 hover:text-red-400 px-1.5 py-1">Delete</button>
+              <button
+                onClick={() => onDelete(activePresetId)}
+                className="text-xs text-red-400/70 hover:text-red-400 px-1.5 py-1"
+              >
+                Delete
+              </button>
             )}
             <select
               value={activePresetId}
@@ -84,7 +107,9 @@ export function PresetsPage({
               className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5"
             >
               {presets.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
               ))}
             </select>
           </ItemRow>
@@ -105,12 +130,27 @@ export function PresetsPage({
               autoFocus
               className="flex-1 text-sm bg-neutral-700 border border-neutral-600 rounded px-2 py-0.5 outline-none focus:border-neutral-500"
             />
-            <button onClick={() => setCreating(null)} className="text-xs text-neutral-500 hover:text-neutral-300 px-2 py-1">Cancel</button>
+            <button
+              onClick={() => setCreating(null)}
+              className="text-xs text-neutral-500 hover:text-neutral-300 px-2 py-1"
+            >
+              Cancel
+            </button>
           </div>
         ) : (
           <ItemRow label="New preset">
-            <button onClick={() => setCreating({ name: '', fromDefaults: false })} className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 hover:bg-neutral-700">From current</button>
-            <button onClick={() => setCreating({ name: '', fromDefaults: true })} className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 hover:bg-neutral-700">From defaults</button>
+            <button
+              onClick={() => setCreating({ name: '', fromDefaults: false })}
+              className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 hover:bg-neutral-700"
+            >
+              From current
+            </button>
+            <button
+              onClick={() => setCreating({ name: '', fromDefaults: true })}
+              className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 hover:bg-neutral-700"
+            >
+              From defaults
+            </button>
           </ItemRow>
         )}
       </ItemGroup>

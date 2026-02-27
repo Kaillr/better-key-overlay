@@ -33,38 +33,40 @@ export function DisplayPage({ settings, set }: DisplayPageProps) {
       )}
 
       <div className="flex flex-col gap-2">
-        <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">Counters</span>
+        <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">
+          Counters
+        </span>
         <ItemGroup>
           <ItemRow label="Show KPS">
-          <input
-            type="checkbox"
-            checked={settings.showKps}
-            onChange={(e) => set({ showKps: e.target.checked })}
-            className="w-4 h-4"
-          />
-        </ItemRow>
-        <ItemSeparator />
-        <ItemRow label="Show BPM">
-          <input
-            type="checkbox"
-            checked={settings.showBpm}
-            onChange={(e) => set({ showBpm: e.target.checked })}
-            className="w-4 h-4"
-          />
-        </ItemRow>
-        <ItemSeparator />
-        <ItemRow label="Counter position">
-          <select
-            value={settings.counterPosition}
-            onChange={(e) =>
-              set({ counterPosition: e.target.value as 'bottom' | 'left' | 'right' })
-            }
-            className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5"
-          >
-            <option value="bottom">Bottom</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-          </select>
+            <input
+              type="checkbox"
+              checked={settings.showKps}
+              onChange={(e) => set({ showKps: e.target.checked })}
+              className="w-4 h-4"
+            />
+          </ItemRow>
+          <ItemSeparator />
+          <ItemRow label="Show BPM">
+            <input
+              type="checkbox"
+              checked={settings.showBpm}
+              onChange={(e) => set({ showBpm: e.target.checked })}
+              className="w-4 h-4"
+            />
+          </ItemRow>
+          <ItemSeparator />
+          <ItemRow label="Counter position">
+            <select
+              value={settings.counterPosition}
+              onChange={(e) =>
+                set({ counterPosition: e.target.value as 'bottom' | 'left' | 'right' })
+              }
+              className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5"
+            >
+              <option value="bottom">Bottom</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
           </ItemRow>
         </ItemGroup>
       </div>

@@ -29,7 +29,8 @@ export function useDevice(
         }
 
         // Only update state if something changed
-        if (foundIds.size === prevIds.size && [...foundIds].every((id) => prevIds.has(id))) return prev
+        if (foundIds.size === prevIds.size && [...foundIds].every((id) => prevIds.has(id)))
+          return prev
         return found.map((dev) => {
           const existing = prev.find((d) => deviceId(d) === deviceId(dev))
           return existing ?? dev
@@ -51,7 +52,9 @@ export function useDevice(
     if (!ipc) return
     const handler = () => syncDevices()
     ipc.on('custom-devices-changed', handler)
-    return () => { ipc.removeListener('custom-devices-changed', handler) }
+    return () => {
+      ipc.removeListener('custom-devices-changed', handler)
+    }
   }, [syncDevices])
 
   // Handle physical disconnects

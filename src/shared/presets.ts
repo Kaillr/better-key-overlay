@@ -9,7 +9,8 @@ export function uniquePresetName(name: string, existing: string[]): string {
 
 function sanitizeName(name: unknown): string {
   if (typeof name === 'string') return name
-  if (name && typeof name === 'object' && 'name' in name) return sanitizeName((name as { name: unknown }).name)
+  if (name && typeof name === 'object' && 'name' in name)
+    return sanitizeName((name as { name: unknown }).name)
   return 'Unnamed preset'
 }
 

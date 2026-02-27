@@ -11,7 +11,7 @@ import {
   PluginLine,
   PluginFill,
   BookmarkLine,
-  BookmarkFill,
+  BookmarkFill
 } from '@mingcute/react'
 
 export type SettingsPage = 'keys' | 'style' | 'visualizer' | 'display' | 'device' | 'presets'
@@ -29,7 +29,7 @@ const menuItems: MenuItem[] = [
   { id: 'visualizer', label: 'Visualizer', icon: ChartVertical2Line, iconFill: ChartVertical2Fill },
   { id: 'display', label: 'Display', icon: DisplayLine, iconFill: DisplayFill },
   { id: 'device', label: 'Device', icon: PluginLine, iconFill: PluginFill },
-  { id: 'presets', label: 'Presets', icon: BookmarkLine, iconFill: BookmarkFill },
+  { id: 'presets', label: 'Presets', icon: BookmarkLine, iconFill: BookmarkFill }
 ]
 
 interface SidebarProps {
