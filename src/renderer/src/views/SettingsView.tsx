@@ -414,6 +414,14 @@ export function SettingsView(): React.JSX.Element {
           Back to overlay
         </a>
       )}
+      <a
+        href="https://github.com/Kaillr/better-key-overlay"
+        target="_blank"
+        rel="noreferrer"
+        className="text-[10px] text-neutral-600 hover:text-neutral-400 text-center"
+      >
+        View on GitHub
+      </a>
     </div>
   )
 
