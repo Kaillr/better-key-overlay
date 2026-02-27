@@ -27,6 +27,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@mingcute/react": "^1.4.1",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.3.9",
     "uiohook-napi": "^1.5.4"

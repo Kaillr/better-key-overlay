@@ -915,7 +915,7 @@ class AsProviderNuphy extends AsProvider {
         }
       }
     }
-  } 
+  }
 
   stopListening() {
     this.dev.oninputreport = undefined

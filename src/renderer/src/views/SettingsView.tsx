@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
-import { KeyList } from '../components/settings/KeyList'
-import { ColorPicker } from '../components/settings/ColorPicker'
-import { KeyStyleEditor } from '../components/settings/KeyStyleEditor'
-import { Section, ItemGroup, ItemRow, ItemSeparator } from '../components/settings/SettingsLayout'
+import { Sidebar, type SettingsPage } from '../components/settings/Sidebar'
+import { KeysPage } from './settings/KeysPage'
+import { KeyStylePage } from './settings/KeyStylePage'
+import { VisualizerPage } from './settings/VisualizerPage'
+import { DisplayPage } from './settings/DisplayPage'
+import { DevicePage } from './settings/DevicePage'
 import { defaultSettings } from '../../../shared/defaults'
 import { deriveLabel, getAnalogKey } from '../../../shared/keyMappings'
-import { getDevices, requestDevice, type AnalogDevice } from '../lib/devices'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
 const isElectron = !!ipcRenderer
 
-// Browser-only: persist settings in localStorage
 function loadBrowserSettings(): AppSettings {
   try {
     const stored = localStorage.getItem('settings')
@@ -22,13 +22,12 @@ function loadBrowserSettings(): AppSettings {
 
 function saveBrowserSettings(settings: AppSettings): void {
   localStorage.setItem('settings', JSON.stringify(settings))
-  // Notify other windows (overlay) via storage event
   window.dispatchEvent(new StorageEvent('storage', { key: 'settings' }))
 }
 
 export function SettingsView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const [connectedDevices, setConnectedDevices] = useState<AnalogDevice[]>([])
+  const [activePage, setActivePage] = useState<SettingsPage>('keys')
   const [updateStatus, setUpdateStatus] = useState<{ status: string; info?: string } | null>(null)
 
   useEffect(() => {
@@ -40,15 +39,6 @@ export function SettingsView(): React.JSX.Element {
     return () => {
       ipcRenderer.removeListener('update-status', handler)
     }
-  }, [])
-
-  useEffect(() => {
-    const refresh = () => {
-      getDevices().then(setConnectedDevices)
-    }
-    refresh()
-    const interval = setInterval(refresh, 2000)
-    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -80,7 +70,7 @@ export function SettingsView(): React.JSX.Element {
       setSettings((prev) => {
         const updated = {
           ...prev!,
-          keys: [...prev!.keys, { code: '', label: '', analogKey: 0, uiohookKeycode: 0 }]
+          keys: [...prev!.keys, { code: '', label: '', analogKey: 0, uiohookKeycode: 0 }],
         }
         saveBrowserSettings(updated)
         return updated
@@ -109,7 +99,7 @@ export function SettingsView(): React.JSX.Element {
           index,
           code,
           key,
-          uiohookKeycode
+          uiohookKeycode,
         })
         setSettings(updated)
       } else {
@@ -120,7 +110,7 @@ export function SettingsView(): React.JSX.Element {
             code,
             label: deriveLabel(code),
             analogKey: getAnalogKey(code),
-            uiohookKeycode: 0
+            uiohookKeycode: 0,
           }
           const updated = { ...prev!, keys }
           saveBrowserSettings(updated)
@@ -131,229 +121,84 @@ export function SettingsView(): React.JSX.Element {
     []
   )
 
-  const connectDevice = useCallback(async () => {
-    const dev = await requestDevice()
-    if (dev) {
-      const devs = await getDevices()
-      setConnectedDevices(devs)
-    }
-  }, [])
-
   if (!settings) return <div className="h-screen bg-neutral-900" />
 
-  return (
-    <div className="pt-6 pb-6 pl-6 pr-2 bg-neutral-900 text-white min-h-screen">
-      <div className="max-w-xl mx-auto flex flex-col gap-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Settings</h1>
-          {!isElectron && (
-            <a href="#/" className="text-sm text-neutral-500 hover:text-neutral-300">
-              Back
-            </a>
-          )}
-        </div>
+  const renderPage = () => {
+    switch (activePage) {
+      case 'keys':
+        return (
+          <KeysPage
+            settings={settings}
+            addKey={addKey}
+            removeKey={removeKey}
+            recordKey={recordKey}
+          />
+        )
+      case 'style':
+        return <KeyStylePage settings={settings} set={set} />
+      case 'visualizer':
+        return <VisualizerPage settings={settings} set={set} />
+      case 'display':
+        return <DisplayPage settings={settings} set={set} />
+      case 'device':
+        return <DevicePage />
+    }
+  }
 
-        <Section title="Keys">
-          <KeyList keys={settings.keys} onRemove={removeKey} onRecord={recordKey} />
-          <button
-            onClick={addKey}
-            disabled={settings.keys.some((k) => !k.code)}
-            className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm w-full"
-          >
-            Add Key
-          </button>
-        </Section>
-
-        <Section title="Device">
-          <ItemGroup>
-            {connectedDevices.length > 0 ? (
-              connectedDevices.map((dev, i) => (
-                <div key={i}>
-                  {i > 0 && <ItemSeparator />}
-                  <ItemRow label={dev.getProductName()} description="Connected" />
-                </div>
-              ))
-            ) : (
-              <ItemRow label="No devices connected" />
-            )}
-            {!isElectron && navigator.hid && (
-              <>
-                <ItemSeparator />
-                <ItemRow label="Add device">
-                  <button
-                    onClick={connectDevice}
-                    className="px-3 py-1.5 text-xs rounded-lg border border-neutral-600 hover:border-neutral-500 bg-neutral-800"
-                  >
-                    Connect
-                  </button>
-                </ItemRow>
-              </>
-            )}
-          </ItemGroup>
-        </Section>
-
-        <Section title="Key Style">
-          <KeyStyleEditor keyStyle={settings.keyStyle} onChange={(keyStyle) => set({ keyStyle })} />
-        </Section>
-
-        <Section title="Pressure Colors">
-          <ColorPicker colors={settings.colors} onChange={(colors) => set({ colors })} />
-        </Section>
-
-        <Section title="Visualizer">
-          <ItemGroup>
-            <ItemRow label="Show visualizer">
-              <input
-                type="checkbox"
-                checked={settings.showVisualizer}
-                onChange={(e) => set({ showVisualizer: e.target.checked })}
-                className="w-4 h-4"
-              />
-            </ItemRow>
-            {settings.showVisualizer && (
-              <>
-                <ItemSeparator />
-                <ItemRow label="Speed">
-                  <input
-                    type="range"
-                    min={50}
-                    max={1000}
-                    step={50}
-                    value={settings.scrollRate}
-                    onChange={(e) => set({ scrollRate: Number(e.target.value) })}
-                    className="w-24"
-                  />
-                  <span className="text-xs text-neutral-500 w-14 text-right">
-                    {settings.scrollRate} px/s
-                  </span>
-                </ItemRow>
-                <ItemSeparator />
-                <ItemRow label="Fade out at top">
-                  <input
-                    type="checkbox"
-                    checked={settings.fade.enabled}
-                    onChange={(e) => set({ fade: { ...settings.fade, enabled: e.target.checked } })}
-                    className="w-4 h-4"
-                  />
-                </ItemRow>
-                {settings.fade.enabled && (
-                  <>
-                    <ItemSeparator />
-                    <ItemRow label="Fade height">
-                      <input
-                        type="range"
-                        min={5}
-                        max={100}
-                        step={5}
-                        value={settings.fade.height}
-                        onChange={(e) =>
-                          set({ fade: { ...settings.fade, height: Number(e.target.value) } })
-                        }
-                        className="w-24"
-                      />
-                      <span className="text-xs text-neutral-500 w-10 text-right">
-                        {settings.fade.height}%
-                      </span>
-                    </ItemRow>
-                  </>
-                )}
-              </>
-            )}
-          </ItemGroup>
-        </Section>
-
-        <Section title="Display">
-          <ItemGroup>
-            {isElectron && settings.showVisualizer && (
-              <>
-                <ItemRow label="Window height">
-                  <input
-                    type="range"
-                    min={200}
-                    max={1200}
-                    step={10}
-                    value={settings.windowHeight}
-                    onChange={(e) => set({ windowHeight: Number(e.target.value) })}
-                    className="w-24"
-                  />
-                  <span className="text-xs text-neutral-500 w-12 text-right">
-                    {settings.windowHeight}px
-                  </span>
-                </ItemRow>
-                <ItemSeparator />
-              </>
-            )}
-            <ItemRow label="Counter position">
-              <select
-                value={settings.counterPosition}
-                onChange={(e) =>
-                  set({ counterPosition: e.target.value as 'bottom' | 'left' | 'right' })
-                }
-                className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5"
+  const sidebarBottom = (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={() => set({ ...defaultSettings })}
+        className="w-full py-1.5 text-xs text-red-400 hover:text-red-300"
+      >
+        Reset to Defaults
+      </button>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-[10px] text-neutral-600">v{__APP_VERSION__}</p>
+        {isElectron && (
+          <div className="text-[10px] text-neutral-500 text-center">
+            {updateStatus?.status === 'checking' && 'Checking...'}
+            {updateStatus?.status === 'available' && `Downloading v${updateStatus.info}...`}
+            {updateStatus?.status === 'downloading' && `${updateStatus.info}`}
+            {updateStatus?.status === 'up-to-date' && 'Up to date'}
+            {updateStatus?.status === 'error' && 'Update failed'}
+            {updateStatus?.status === 'ready' && (
+              <button
+                onClick={() => ipcRenderer!.invoke('install-update')}
+                className="text-blue-400 hover:text-blue-300"
               >
-                <option value="bottom">Bottom</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-              </select>
-            </ItemRow>
-            <ItemSeparator />
-            <ItemRow label="Show KPS">
-              <input
-                type="checkbox"
-                checked={settings.showKps}
-                onChange={(e) => set({ showKps: e.target.checked })}
-                className="w-4 h-4"
-              />
-            </ItemRow>
-            <ItemSeparator />
-            <ItemRow label="Show BPM">
-              <input
-                type="checkbox"
-                checked={settings.showBpm}
-                onChange={(e) => set({ showBpm: e.target.checked })}
-                className="w-4 h-4"
-              />
-            </ItemRow>
-          </ItemGroup>
-        </Section>
-
-        <button
-          onClick={() => set({ ...defaultSettings })}
-          className="w-full py-2 text-sm text-red-400 hover:text-red-300"
+                Install v{updateStatus.info}
+              </button>
+            )}
+            {(!updateStatus ||
+              updateStatus.status === 'up-to-date' ||
+              updateStatus.status === 'error') && (
+              <button
+                onClick={() => ipcRenderer!.invoke('check-for-updates')}
+                className="text-neutral-600 hover:text-neutral-400"
+              >
+                Check for updates
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      {!isElectron && (
+        <a
+          href="#/"
+          className="w-full py-1.5 text-xs text-neutral-500 hover:text-neutral-300 text-center block"
         >
-          Reset to Defaults
-        </button>
+          Back to overlay
+        </a>
+      )}
+    </div>
+  )
 
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-xs text-neutral-600">v{__APP_VERSION__}</p>
-          {isElectron && (
-            <div className="text-xs text-neutral-500">
-              {updateStatus?.status === 'checking' && 'Checking for updates...'}
-              {updateStatus?.status === 'available' && `Downloading v${updateStatus.info}...`}
-              {updateStatus?.status === 'downloading' && `Downloading... ${updateStatus.info}`}
-              {updateStatus?.status === 'up-to-date' && 'Up to date'}
-              {updateStatus?.status === 'error' && 'Update check failed'}
-              {updateStatus?.status === 'ready' && (
-                <button
-                  onClick={() => ipcRenderer!.invoke('install-update')}
-                  className="text-blue-400 hover:text-blue-300"
-                >
-                  Install v{updateStatus.info} and restart
-                </button>
-              )}
-              {(!updateStatus ||
-                updateStatus.status === 'up-to-date' ||
-                updateStatus.status === 'error') && (
-                <button
-                  onClick={() => ipcRenderer!.invoke('check-for-updates')}
-                  className="text-neutral-500 hover:text-neutral-300 ml-2"
-                >
-                  Check for updates
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+  return (
+    <div className="h-screen flex bg-neutral-900 text-white">
+      <Sidebar activePage={activePage} onNavigate={setActivePage} bottom={sidebarBottom} />
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-lg mx-auto">{renderPage()}</div>
       </div>
     </div>
   )
