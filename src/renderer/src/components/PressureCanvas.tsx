@@ -57,11 +57,11 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
         if (pressure === 0) return
         const kc = key.colors ?? c
         if (kc.gradient) {
-          const start = key.active ? kc.activeStartColor : kc.inactiveStartColor
-          const end = key.active ? kc.activeEndColor : kc.inactiveEndColor
+          const start = key.active ? (kc.activeStartColor ?? kc.activeColor) : (kc.inactiveStartColor ?? kc.inactiveColor)
+          const end = key.active ? (kc.activeEndColor ?? kc.activeColor) : (kc.inactiveEndColor ?? kc.inactiveColor)
           ctx.fillStyle = lerpColor(start, end, pressure)
         } else {
-          ctx.fillStyle = key.active ? kc.activeEndColor : kc.inactiveStartColor
+          ctx.fillStyle = key.active ? kc.activeColor : kc.inactiveColor
         }
         ctx.fillRect(xOffset, y, KEY_WIDTH, 1)
       })

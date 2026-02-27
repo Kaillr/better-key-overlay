@@ -1,13 +1,11 @@
-import type { AppSettings } from './types'
+import type { AppSettings, StoreSchema } from './types'
 
 export const defaultSettings: AppSettings = {
   keys: [],
   scrollRate: 400,
   colors: {
-    activeStartColor: '#ff0000',
-    activeEndColor: '#ffffff',
-    inactiveStartColor: '#ff0000',
-    inactiveEndColor: '#00ff00',
+    activeColor: '#ffffff',
+    inactiveColor: '#ff0000',
     gradient: false
   },
   showKps: false,
@@ -39,4 +37,11 @@ export const defaultSettings: AppSettings = {
     height: 50
   },
   windowHeight: 720
+}
+
+const defaultPresetId = 'default'
+
+export const defaultStoreSchema: StoreSchema = {
+  activePresetId: defaultPresetId,
+  presets: [{ id: defaultPresetId, name: 'Unnamed preset', settings: defaultSettings }]
 }

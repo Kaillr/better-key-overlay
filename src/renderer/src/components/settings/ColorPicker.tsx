@@ -12,28 +12,47 @@ export function ColorPicker({ colors, onChange }: ColorPickerProps) {
     onChange({ ...colors, ...partial })
   }
 
+  const toggleGradient = (enabled: boolean): void => {
+    if (enabled) {
+      onChange({
+        ...colors,
+        gradient: true,
+        activeStartColor: colors.activeColor,
+        activeEndColor: colors.activeColor,
+        inactiveStartColor: colors.inactiveColor,
+        inactiveEndColor: colors.inactiveColor
+      })
+    } else {
+      onChange({
+        activeColor: colors.activeColor,
+        inactiveColor: colors.inactiveColor,
+        gradient: false
+      })
+    }
+  }
+
   return (
     <ItemGroup>
       {colors.gradient ? (
         <>
           <ItemRow label="Active">
             <HexColorInput
-              value={colors.activeStartColor}
+              value={colors.activeStartColor ?? colors.activeColor}
               onChange={(v) => update({ activeStartColor: v })}
             />
             <HexColorInput
-              value={colors.activeEndColor}
+              value={colors.activeEndColor ?? colors.activeColor}
               onChange={(v) => update({ activeEndColor: v })}
             />
           </ItemRow>
           <ItemSeparator />
           <ItemRow label="Inactive">
             <HexColorInput
-              value={colors.inactiveStartColor}
+              value={colors.inactiveStartColor ?? colors.inactiveColor}
               onChange={(v) => update({ inactiveStartColor: v })}
             />
             <HexColorInput
-              value={colors.inactiveEndColor}
+              value={colors.inactiveEndColor ?? colors.inactiveColor}
               onChange={(v) => update({ inactiveEndColor: v })}
             />
           </ItemRow>
@@ -42,15 +61,15 @@ export function ColorPicker({ colors, onChange }: ColorPickerProps) {
         <>
           <ItemRow label="Active">
             <HexColorInput
-              value={colors.activeEndColor}
-              onChange={(v) => update({ activeEndColor: v })}
+              value={colors.activeColor}
+              onChange={(v) => update({ activeColor: v })}
             />
           </ItemRow>
           <ItemSeparator />
           <ItemRow label="Inactive">
             <HexColorInput
-              value={colors.inactiveStartColor}
-              onChange={(v) => update({ inactiveStartColor: v })}
+              value={colors.inactiveColor}
+              onChange={(v) => update({ inactiveColor: v })}
             />
           </ItemRow>
         </>
@@ -60,7 +79,7 @@ export function ColorPicker({ colors, onChange }: ColorPickerProps) {
         <input
           type="checkbox"
           checked={colors.gradient}
-          onChange={(e) => update({ gradient: e.target.checked })}
+          onChange={(e) => toggleGradient(e.target.checked)}
           className="w-4 h-4"
         />
       </ItemRow>

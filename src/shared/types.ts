@@ -1,9 +1,11 @@
 export interface ColorConfig {
-  activeStartColor: string
-  activeEndColor: string
-  inactiveStartColor: string
-  inactiveEndColor: string
+  activeColor: string
+  inactiveColor: string
   gradient: boolean
+  activeStartColor?: string
+  activeEndColor?: string
+  inactiveStartColor?: string
+  inactiveEndColor?: string
 }
 
 export interface KeyConfigEntry {
@@ -48,4 +50,15 @@ export interface AppSettings {
   keyStyle: KeyStyle
   fade: FadeConfig
   windowHeight: number
+}
+
+export interface Preset {
+  id: string
+  name: string
+  settings: AppSettings
+}
+
+export interface StoreSchema {
+  activePresetId: string
+  presets: Preset[]
 }

@@ -4,7 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
 import { uIOhook } from 'uiohook-napi'
 import { contentWidth, noCanvasHeight } from '../shared/config'
-import { store } from './store'
+import { store, getActiveSettings } from './store'
 import { registerIpcHandlers } from './ipc'
 import { createTray } from './tray'
 import { openSettingsWindow, getSettingsWindow } from './settingsWindow'
@@ -53,7 +53,7 @@ function onConfigChanged(settings: AppSettings): void {
 }
 
 function createWindow(): void {
-  const settings = store.store
+  const settings = getActiveSettings()
   const keys = settings.keys
   mainWindow = new BrowserWindow({
     width: contentWidth(keys.filter((k) => k.code).length, hasSideCounter(settings)),
@@ -135,7 +135,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  rebuildTracking(store.store)
+  rebuildTracking(getActiveSettings())
   registerIpcHandlers(() => mainWindow, onConfigChanged)
   createTray(
     () => openSettingsWindow(),
