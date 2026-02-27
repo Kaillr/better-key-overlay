@@ -54,8 +54,12 @@ function PropertyGroup({
     onChange({ ...keyStyle, inactive: { ...inactive, [prop]: [value, value] } })
   }
 
+  const title = label.charAt(0).toUpperCase() + label.slice(1) + ' color'
+
   return (
-    <ItemGroup>
+    <div className="flex flex-col gap-2">
+      <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">{title}</span>
+      <ItemGroup>
       {gradient ? (
         <>
           <ItemRow label={`Active ${label}`}>
@@ -89,33 +93,13 @@ function PropertyGroup({
         />
       </ItemRow>
     </ItemGroup>
+    </div>
   )
 }
 
 export function KeyStyleEditor({ keyStyle, onChange }: KeyStyleEditorProps) {
   return (
     <div className="flex flex-col gap-3">
-      <PropertyGroup
-        label="border"
-        prop="borderColor"
-        gradientProp="borderColorGradient"
-        keyStyle={keyStyle}
-        onChange={onChange}
-      />
-      <PropertyGroup
-        label="background"
-        prop="backgroundColor"
-        gradientProp="backgroundColorGradient"
-        keyStyle={keyStyle}
-        onChange={onChange}
-      />
-      <PropertyGroup
-        label="text"
-        prop="textColor"
-        gradientProp="textColorGradient"
-        keyStyle={keyStyle}
-        onChange={onChange}
-      />
       <ItemGroup>
         <ItemRow label="Border width">
           <input
@@ -143,6 +127,27 @@ export function KeyStyleEditor({ keyStyle, onChange }: KeyStyleEditorProps) {
           <span className="text-xs text-neutral-500 w-8 text-right">{keyStyle.borderRadius}px</span>
         </ItemRow>
       </ItemGroup>
+      <PropertyGroup
+        label="border"
+        prop="borderColor"
+        gradientProp="borderColorGradient"
+        keyStyle={keyStyle}
+        onChange={onChange}
+      />
+      <PropertyGroup
+        label="background"
+        prop="backgroundColor"
+        gradientProp="backgroundColorGradient"
+        keyStyle={keyStyle}
+        onChange={onChange}
+      />
+      <PropertyGroup
+        label="text"
+        prop="textColor"
+        gradientProp="textColorGradient"
+        keyStyle={keyStyle}
+        onChange={onChange}
+      />
     </div>
   )
 }
