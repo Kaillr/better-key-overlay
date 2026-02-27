@@ -1,3 +1,14 @@
+# [1.6.0](https://github.com/Kaillr/better-key-overlay/compare/v1.5.0...v1.6.0) (2026-02-27)
+
+
+### Features
+
+* add custom device support and HID diagnostics tool ([99180ba](https://github.com/Kaillr/better-key-overlay/commit/99180ba8eff83347762e3707fbc2c405cae62e25))
+* add presets system for saving and managing settings profiles ([ab2e82c](https://github.com/Kaillr/better-key-overlay/commit/ab2e82cd84bac4ffe4316af060d0eec67d6c47e3))
+* add sidebar navigation to settings with separate pages ([dd20d81](https://github.com/Kaillr/better-key-overlay/commit/dd20d81f27633e65572acb31c1ac792d704bbd5e))
+* add View on GitHub link to settings sidebar ([571f944](https://github.com/Kaillr/better-key-overlay/commit/571f944d6462c4f7c9582a1df98b8ec6590110f1))
+* improve settings layout with grouped labels and reordered options ([7d9f06a](https://github.com/Kaillr/better-key-overlay/commit/7d9f06a703f589c529014cee5f3a41130591d5ec))
+
 # [1.5.0](https://github.com/Kaillr/better-key-overlay/compare/v1.4.3...v1.5.0) (2026-02-26)
 
 
