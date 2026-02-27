@@ -17,34 +17,37 @@ export interface AnalogDevice {
   getProductName: () => string
 }
 
+// --- Custom device config (localStorage) ---
+
 export interface CustomDeviceConfig {
   vendorId: number
   productId: number
   name: string
 }
 
+const STORAGE_KEY = 'customDevices'
+
 export function getCustomDevices(): CustomDeviceConfig[] {
   try {
-    return JSON.parse(localStorage.getItem('customDevices') || '[]')
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
   } catch {
     return []
   }
-}
-
-export function saveCustomDevices(devices: CustomDeviceConfig[]): void {
-  localStorage.setItem('customDevices', JSON.stringify(devices))
 }
 
 export function addCustomDevice(config: CustomDeviceConfig): void {
   const devices = getCustomDevices()
   if (devices.some((d) => d.vendorId === config.vendorId && d.productId === config.productId)) return
   devices.push(config)
-  saveCustomDevices(devices)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(devices))
 }
 
 export function removeCustomDevice(vendorId: number, productId: number): void {
-  saveCustomDevices(getCustomDevices().filter((d) => d.vendorId !== vendorId || d.productId !== productId))
+  const devices = getCustomDevices().filter((d) => d.vendorId !== vendorId || d.productId !== productId)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(devices))
 }
+
+// --- Generic Wooting-style device ---
 
 function createGenericDevice(dev: HIDDevice): AnalogDevice {
   return {
@@ -68,31 +71,43 @@ function createGenericDevice(dev: HIDDevice): AnalogDevice {
   }
 }
 
-
-export async function getDevices(): Promise<AnalogDevice[]> {
-  if (!navigator.hid) return []
-  const supported: AnalogDevice[] = await analogsense.getDevices()
-  const supportedIds = new Set(supported.map((d: AnalogDevice) => `${d.hidDevice.vendorId}:${d.hidDevice.productId}`))
-  const configs = getCustomDevices().filter((c) => !supportedIds.has(`${c.vendorId}:${c.productId}`))
-  if (configs.length === 0) return supported
-  const allHidDevices = await navigator.hid.getDevices()
-  const custom: AnalogDevice[] = []
+async function connectCustomDevices(exclude: Set<string>): Promise<AnalogDevice[]> {
+  const configs = getCustomDevices().filter((c) => !exclude.has(`${c.vendorId}:${c.productId}`))
+  if (configs.length === 0) return []
+  const allHid = await navigator.hid.getDevices()
+  const result: AnalogDevice[] = []
   for (const config of configs) {
-    const matching = allHidDevices.filter(
-      (d) => d.vendorId === config.vendorId && d.productId === config.productId
-    )
-    for (const dev of matching) {
+    // Prefer interfaces with vendor-specific usage pages (where analog data lives)
+    const candidates = allHid
+      .filter((d) => d.vendorId === config.vendorId && d.productId === config.productId)
+      .sort((a, b) => {
+        const aVendor = a.collections.some((c) => c.usagePage >= 0xff00) ? 1 : 0
+        const bVendor = b.collections.some((c) => c.usagePage >= 0xff00) ? 1 : 0
+        return bVendor - aVendor
+      })
+    for (const dev of candidates) {
       try {
         if (!dev.opened) await dev.open()
-        custom.push(createGenericDevice(dev))
+        result.push(createGenericDevice(dev))
         break
       } catch {}
     }
   }
+  return result
+}
+
+// --- Public API ---
+
+/** Connect to all available analog devices (AnalogSense + custom). Used by overlay. */
+export async function getDevices(): Promise<AnalogDevice[]> {
+  if (!navigator.hid) return []
+  const supported: AnalogDevice[] = await analogsense.getDevices()
+  const supportedIds = new Set(supported.map((d: AnalogDevice) => `${d.hidDevice.vendorId}:${d.hidDevice.productId}`))
+  const custom = await connectCustomDevices(supportedIds)
   return [...supported, ...custom]
 }
 
-/** List connected device names without opening them (safe for settings page) */
+/** List device names without opening them. Used by settings page. */
 export async function listConnectedDeviceNames(): Promise<string[]> {
   if (!navigator.hid) return []
   const devices = await navigator.hid.getDevices()
@@ -103,9 +118,7 @@ export async function listConnectedDeviceNames(): Promise<string[]> {
     const key = `${d.vendorId}:${d.productId}`
     if (seen.has(key)) continue
     seen.add(key)
-    const isSupported = !!analogsense.findProviderForDevice(d)
-    const isCustom = getCustomDevices().some((c) => c.vendorId === d.vendorId && c.productId === d.productId)
-    if (isSupported || isCustom) names.push(d.productName)
+    if (analogsense.findProviderForDevice(d)) names.push(d.productName)
   }
   return names
 }
