@@ -1,67 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ItemGroup, ItemRow, ItemSeparator } from '../../components/settings/SettingsLayout'
 import { DeviceDiagnostics } from '../../components/settings/DeviceDiagnostics'
-import {
-  listConnectedDeviceNames,
-  getCustomDevices,
-  addCustomDevice,
-  removeCustomDevice,
-  type CustomDeviceConfig
-} from '../../lib/devices'
-
-const isElectron = !!window.electron?.ipcRenderer
-
-function notifyOverlay(): void {
-  window.electron?.ipcRenderer?.invoke('custom-devices-changed')
-}
+import { listConnectedDeviceNames } from '../../lib/devices'
 
 export function DevicePage() {
   const [connectedNames, setConnectedNames] = useState<string[]>([])
-  const [customDevices, setCustomDevices] = useState<CustomDeviceConfig[]>(getCustomDevices)
-  const [availableHidDevices, setAvailableHidDevices] = useState<HIDDevice[]>([])
-  const [selectValue, setSelectValue] = useState('')
 
   useEffect(() => {
     const refresh = () => listConnectedDeviceNames().then(setConnectedNames)
     refresh()
     const interval = setInterval(refresh, 2000)
     return () => clearInterval(interval)
-  }, [])
-
-  const scanAvailable = useCallback(async () => {
-    if (!navigator.hid) return
-    const devices = await navigator.hid.getDevices()
-    const seen = new Set<string>()
-    const customs = getCustomDevices()
-    const filtered: HIDDevice[] = []
-    for (const d of devices) {
-      if (!d.productName) continue
-      const key = `${d.vendorId}:${d.productId}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      if (customs.some((c) => c.vendorId === d.vendorId && c.productId === d.productId)) continue
-      filtered.push(d)
-    }
-    setAvailableHidDevices(filtered)
-  }, [])
-
-  const handleAdd = useCallback((dev: HIDDevice) => {
-    addCustomDevice({
-      vendorId: dev.vendorId,
-      productId: dev.productId,
-      name: dev.productName || 'Unknown device'
-    })
-    setCustomDevices(getCustomDevices())
-    setAvailableHidDevices((prev) =>
-      prev.filter((d) => d.vendorId !== dev.vendorId || d.productId !== dev.productId)
-    )
-    notifyOverlay()
-  }, [])
-
-  const handleRemove = useCallback((vendorId: number, productId: number) => {
-    removeCustomDevice(vendorId, productId)
-    setCustomDevices(getCustomDevices())
-    notifyOverlay()
   }, [])
 
   return (
@@ -80,66 +29,6 @@ export function DevicePage() {
           <ItemRow label="No devices connected" />
         )}
       </ItemGroup>
-
-      {navigator.hid && (
-        <div className="flex flex-col gap-2">
-          <span className="text-neutral-500 text-xs font-medium tracking-wide uppercase px-1">
-            Unsupported devices
-          </span>
-          <ItemGroup>
-            {customDevices.map((dev, i) => (
-              <div key={`${dev.vendorId}:${dev.productId}`}>
-                {i > 0 && <ItemSeparator />}
-                <ItemRow label={dev.name}>
-                  <button
-                    onClick={() => handleRemove(dev.vendorId, dev.productId)}
-                    className="text-xs text-red-400/70 hover:text-red-400 px-1.5 py-1"
-                  >
-                    Remove
-                  </button>
-                </ItemRow>
-              </div>
-            ))}
-            {customDevices.length > 0 && <ItemSeparator />}
-            <ItemRow label="Add unsupported device">
-              <select
-                value={selectValue}
-                onFocus={scanAvailable}
-                onChange={(e) => {
-                  const dev = availableHidDevices[Number(e.target.value)]
-                  if (dev) handleAdd(dev)
-                  setSelectValue('')
-                }}
-                className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 max-w-[200px]"
-              >
-                <option value="" disabled>
-                  Select device
-                </option>
-                {availableHidDevices.map((d, i) => (
-                  <option key={i} value={i}>
-                    {d.productName} (0x{d.vendorId.toString(16)})
-                  </option>
-                ))}
-              </select>
-              {!isElectron && (
-                <button
-                  onClick={async () => {
-                    await navigator.hid.requestDevice({ filters: [] })
-                    scanAvailable()
-                  }}
-                  className="text-xs bg-neutral-800 border border-neutral-600 rounded-lg px-2 py-1.5 hover:bg-neutral-700"
-                >
-                  +
-                </button>
-              )}
-            </ItemRow>
-          </ItemGroup>
-          <p className="text-xs text-neutral-600 px-1">
-            If your analog keyboard isn&apos;t detected, add it here. If it doesn&apos;t work, use
-            Device Diagnostics below to export info and open an issue on GitHub.
-          </p>
-        </div>
-      )}
 
       <DeviceDiagnostics />
     </div>

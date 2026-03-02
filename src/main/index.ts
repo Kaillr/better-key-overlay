@@ -142,10 +142,6 @@ app.whenReady().then(() => {
     () => app.quit()
   )
 
-  ipcMain.handle('custom-devices-changed', () => {
-    mainWindow?.webContents.send('custom-devices-changed')
-  })
-
   ipcMain.handle('check-for-updates', () => {
     if (app.isPackaged) autoUpdater.checkForUpdates()
   })
