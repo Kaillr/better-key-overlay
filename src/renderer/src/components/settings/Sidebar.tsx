@@ -44,7 +44,7 @@ export function Sidebar({ activePage, onNavigate, bottom }: SidebarProps) {
       <div className="p-4">
         <h1 className="text-base font-semibold text-white">Settings</h1>
       </div>
-      <nav className="flex-1 px-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-2 space-y-0.5">
         {menuItems.map((item) => {
           const active = activePage === item.id
           const Icon = active ? item.iconFill : item.icon
