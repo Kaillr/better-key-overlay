@@ -40,21 +40,32 @@ export function DeviceDiagnostics() {
   const [liveReportId, setLiveReportId] = useState(0)
   const [changedIndices, setChangedIndices] = useState<Set<number>>(new Set())
   const [reportCount, setReportCount] = useState(0)
-  const latestReport = useRef<{ reportId: number; bytes: number[] } | null>(null)
+  const [capturedCount, setCapturedCount] = useState(0)
   const allDevicesRef = useRef<HIDDevice[]>([])
+  const capturedReports = useRef<Set<string>>(new Set())
+  const capturedList = useRef<{ reportId: number; raw: string }[]>([])
 
   const handleReport = useCallback((e: HIDInputReportEvent) => {
     const bytes = Array.from(new Uint8Array(e.data.buffer))
     setLiveBytes(bytes)
     setLiveReportId(e.reportId)
     setReportCount((c) => c + 1)
-    latestReport.current = { reportId: e.reportId, bytes }
 
     const active = new Set<number>()
     bytes.forEach((b, i) => {
       if (b !== 0) active.add(i)
     })
     setChangedIndices(active)
+
+    if (capturedReports.current.size < 727) {
+      const raw = bytes.map((b) => b.toString(16).padStart(2, '0')).join(' ')
+      const key = e.reportId + ':' + raw
+      if (!capturedReports.current.has(key)) {
+        capturedReports.current.add(key)
+        capturedList.current.push({ reportId: e.reportId, raw })
+        setCapturedCount(capturedReports.current.size)
+      }
+    }
   }, [])
 
   const refreshDevices = useCallback(async () => {
@@ -118,7 +129,9 @@ export function DeviceDiagnostics() {
       setReportCount(0)
       setLiveBytes([])
       setChangedIndices(new Set())
-      latestReport.current = null
+      capturedReports.current = new Set()
+      capturedList.current = []
+      setCapturedCount(0)
     },
     [connectedDevices, handleReport]
   )
@@ -134,7 +147,8 @@ export function DeviceDiagnostics() {
     setLiveReportId(0)
     setChangedIndices(new Set())
     setReportCount(0)
-    latestReport.current = null
+    capturedReports.current = new Set()
+    capturedList.current = []
   }, [connectedDevices, handleReport])
 
   useEffect(() => {
@@ -159,7 +173,8 @@ export function DeviceDiagnostics() {
           featureReports: c.featureReports?.map((r) => r.reportId) ?? []
         }))
       },
-      totalReports: reportCount
+      totalReports: reportCount,
+      uniqueReports: capturedList.current
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
@@ -245,6 +260,9 @@ export function DeviceDiagnostics() {
                     </span>
                     <span className="text-neutral-500">
                       Reports <span className="text-neutral-400 font-mono">{reportCount}</span>
+                    </span>
+                    <span className="text-neutral-500">
+                      Captured <span className="text-neutral-400 font-mono">{capturedCount}</span>
                     </span>
                   </div>
                   {deviceInfo!.collections.length > 0 && (
