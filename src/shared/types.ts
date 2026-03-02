@@ -61,4 +61,6 @@ export interface Preset {
 export interface StoreSchema {
   activePresetId: string
   presets: Preset[]
+  serverEnabled: boolean
+  serverPort: number
 }

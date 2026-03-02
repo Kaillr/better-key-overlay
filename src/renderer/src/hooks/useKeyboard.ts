@@ -3,10 +3,12 @@ import { getKeys } from '../lib/pressureStore'
 
 const ipcRenderer = window.electron?.ipcRenderer
 
-export function useKeyboard(recordPress: () => void): void {
+export function useKeyboard(recordPress: () => void, enabled = true): void {
   const [, forceRender] = useReducer((x: number) => x + 1, 0)
 
   useEffect(() => {
+    if (!enabled) return
+
     const handleKey = (code: string, pressed: boolean): void => {
       const matching = getKeys(code)
       if (matching.length === 0) return
@@ -35,5 +37,5 @@ export function useKeyboard(recordPress: () => void): void {
         window.removeEventListener('keyup', onKeyUp)
       }
     }
-  }, [recordPress])
+  }, [recordPress, enabled])
 }

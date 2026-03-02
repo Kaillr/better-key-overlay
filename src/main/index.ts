@@ -4,10 +4,18 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
 import { uIOhook } from 'uiohook-napi'
 import { contentWidth, noCanvasHeight } from '../shared/config'
-import { getActiveSettings } from './store'
+import { store, getActiveSettings } from './store'
 import { registerIpcHandlers } from './ipc'
 import { createTray } from './tray'
 import { openSettingsWindow, getSettingsWindow } from './settingsWindow'
+import {
+  startServer,
+  stopServer,
+  broadcastKeyDown,
+  broadcastKeyUp,
+  broadcastAnalog,
+  broadcastSettings
+} from './server'
 import type { AppSettings } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
@@ -43,6 +51,7 @@ function getWindowHeight(settings: AppSettings): number {
 
 function onConfigChanged(settings: AppSettings): void {
   rebuildTracking(settings)
+  broadcastSettings(settings)
   if (mainWindow && !mainWindow.isDestroyed()) {
     const boundKeys = settings.keys.filter((k) => k.code).length
     mainWindow.setContentSize(
@@ -164,6 +173,30 @@ app.whenReady().then(() => {
     captureNextKey = null
   })
 
+  ipcMain.handle('server:get', () => {
+    return { enabled: store.get('serverEnabled'), port: store.get('serverPort') }
+  })
+
+  ipcMain.handle('server:set', (_event, data: { enabled: boolean; port: number }) => {
+    store.set('serverEnabled', data.enabled)
+    store.set('serverPort', data.port)
+    if (data.enabled) {
+      stopServer()
+      startServer(data.port, getActiveSettings())
+    } else {
+      stopServer()
+    }
+  })
+
+  ipcMain.handle('analog:forward', (_event, data: { scancode: number; value: number }[]) => {
+    broadcastAnalog(data)
+  })
+
+  // Auto-start server if enabled
+  if (store.get('serverEnabled')) {
+    startServer(store.get('serverPort'), getActiveSettings())
+  }
+
   createWindow()
 
   uIOhook.on('keydown', (e) => {
@@ -174,15 +207,17 @@ app.whenReady().then(() => {
     }
 
     const code = uiohookMap.get(e.keycode)
-    if (code && mainWindow) {
-      mainWindow.webContents.send('global-keydown', code)
+    if (code) {
+      mainWindow?.webContents.send('global-keydown', code)
+      broadcastKeyDown(code)
     }
   })
 
   uIOhook.on('keyup', (e) => {
     const code = uiohookMap.get(e.keycode)
-    if (code && mainWindow) {
-      mainWindow.webContents.send('global-keyup', code)
+    if (code) {
+      mainWindow?.webContents.send('global-keyup', code)
+      broadcastKeyUp(code)
     }
   })
 

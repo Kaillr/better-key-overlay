@@ -3,7 +3,8 @@ import { getDevices, requestDevice, type AnalogDevice } from '../lib/devices'
 
 export function useDevice(
   onAnalogData: (data: { scancode: number; value: number }[]) => void,
-  onDisconnect: () => void
+  onDisconnect: () => void,
+  enabled = true
 ): { devices: AnalogDevice[]; requestNewDevice: (() => void) | null } {
   const [devices, setDevices] = useState<AnalogDevice[]>([])
   const initRef = useRef(false)
@@ -20,17 +21,17 @@ export function useDevice(
   )
 
   useEffect(() => {
-    if (initRef.current) return
+    if (!enabled || initRef.current) return
     initRef.current = true
     getDevices().then((devs) => {
       for (const dev of devs) {
         addDevice(dev)
       }
     })
-  }, [addDevice])
+  }, [addDevice, enabled])
 
   useEffect(() => {
-    if (!navigator.hid) return
+    if (!enabled || !navigator.hid) return
     const onConnect = () => {
       getDevices().then((devs) => {
         for (const dev of devs) addDevice(dev)
@@ -50,7 +51,7 @@ export function useDevice(
       navigator.hid.removeEventListener('connect', onConnect)
       navigator.hid.removeEventListener('disconnect', onDisconnectEvent)
     }
-  }, [devices, addDevice, onDisconnect])
+  }, [devices, addDevice, onDisconnect, enabled])
 
   const requestDev = useCallback(async () => {
     const dev = await requestDevice()
@@ -61,6 +62,6 @@ export function useDevice(
 
   return {
     devices,
-    requestNewDevice: !isElectron && navigator.hid ? requestDev : null
+    requestNewDevice: !isElectron && navigator.hid && enabled ? requestDev : null
   }
 }

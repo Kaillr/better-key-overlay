@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { PressureCanvas } from '../components/PressureCanvas'
 import { KeyPressure } from '../components/KeyPressure'
-import { keys, rebuildKeys } from '../lib/pressureStore'
+import { keys, getKeys, rebuildKeys } from '../lib/pressureStore'
 import { useKps } from '../hooks/useKps'
 import { useKeyboard } from '../hooks/useKeyboard'
 import { useDevice } from '../hooks/useDevice'
@@ -10,49 +10,95 @@ import { defaultSettings } from '../../../shared/defaults'
 import type { AppSettings } from '../../../shared/types'
 
 const ipcRenderer = window.electron?.ipcRenderer
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isBrowserSource = !!(window as any).__BROWSER_SOURCE__
 
 export function OverlayView(): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [, forceRender] = useReducer((x: number) => x + 1, 0)
   const { kps, recordPress } = useKps()
-  useKeyboard(recordPress)
+  useKeyboard(recordPress, !isBrowserSource)
 
   const applySettings = (s: AppSettings): void => {
     rebuildKeys(s.keys)
     setSettings(s)
   }
 
+  // Electron: fetch settings via IPC
   useEffect(() => {
-    if (ipcRenderer) {
-      ipcRenderer.invoke('settings:get').then(applySettings)
-    } else {
-      try {
-        const stored = localStorage.getItem('settings')
-        applySettings(stored ? JSON.parse(stored) : defaultSettings)
-      } catch {
-        applySettings(defaultSettings)
-      }
+    if (!ipcRenderer) return
+    ipcRenderer.invoke('settings:get').then(applySettings)
+    const handler = (_e: unknown, s: AppSettings): void => applySettings(s)
+    ipcRenderer.on('config-updated', handler)
+    return () => {
+      ipcRenderer.removeListener('config-updated', handler)
     }
   }, [])
 
+  // Browser source: connect via WebSocket
   useEffect(() => {
-    if (ipcRenderer) {
-      const handler = (_e: unknown, s: AppSettings): void => applySettings(s)
-      ipcRenderer.on('config-updated', handler)
-      return () => {
-        ipcRenderer.removeListener('config-updated', handler)
+    if (ipcRenderer || !isBrowserSource) return
+
+    let ws: WebSocket | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout>
+
+    const connect = (): void => {
+      ws = new WebSocket(`ws://${window.location.host}`)
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data)
+          if (msg.type === 'settings') applySettings(msg.data)
+          if (msg.type === 'keydown') {
+            for (const key of getKeys(msg.code)) {
+              key.active = true
+              recordPress()
+            }
+            forceRender()
+          }
+          if (msg.type === 'keyup') {
+            for (const key of getKeys(msg.code)) {
+              key.active = false
+            }
+            forceRender()
+          }
+          if (msg.type === 'analog') {
+            for (const key of keys) {
+              const match = msg.data.find((k: { scancode: number }) => k.scancode === key.analogKey)
+              key.analogPressure = match?.value ?? 0
+            }
+          }
+        } catch {}
       }
-    } else {
-      const handler = (e: StorageEvent): void => {
-        if (e.key === 'settings') {
-          try {
-            const s = JSON.parse(localStorage.getItem('settings') ?? '')
-            applySettings(s)
-          } catch {}
-        }
+      ws.onclose = () => {
+        reconnectTimer = setTimeout(connect, 2000)
       }
-      window.addEventListener('storage', handler)
-      return () => window.removeEventListener('storage', handler)
     }
+    connect()
+
+    return () => {
+      clearTimeout(reconnectTimer)
+      ws?.close()
+    }
+  }, [recordPress])
+
+  // Standalone browser: use localStorage
+  useEffect(() => {
+    if (ipcRenderer || isBrowserSource) return
+    try {
+      const stored = localStorage.getItem('settings')
+      applySettings(stored ? JSON.parse(stored) : defaultSettings)
+    } catch {
+      applySettings(defaultSettings)
+    }
+    const handler = (e: StorageEvent): void => {
+      if (e.key === 'settings') {
+        try {
+          applySettings(JSON.parse(localStorage.getItem('settings') ?? ''))
+        } catch {}
+      }
+    }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
   }, [])
 
   const onAnalogData = useCallback((activeKeys: { scancode: number; value: number }[]) => {
@@ -60,6 +106,7 @@ export function OverlayView(): React.JSX.Element {
       const match = activeKeys.find((k) => k.scancode === key.analogKey)
       key.analogPressure = match?.value ?? 0
     }
+    ipcRenderer?.invoke('analog:forward', activeKeys)
   }, [])
 
   const onDisconnect = useCallback(() => {
@@ -68,7 +115,7 @@ export function OverlayView(): React.JSX.Element {
     }
   }, [])
 
-  useDevice(onAnalogData, onDisconnect)
+  useDevice(onAnalogData, onDisconnect, !isBrowserSource)
 
   if (!settings) return <div className="h-screen w-screen bg-black" />
 
@@ -77,13 +124,17 @@ export function OverlayView(): React.JSX.Element {
       <div className="h-screen w-screen bg-black text-white flex items-center justify-center px-4 select-none">
         <p className="text-neutral-500 text-sm text-center">
           No keys configured.
-          <br />
-          {ipcRenderer ? (
-            'Right-click to open settings.'
-          ) : (
-            <a href="#/settings" className="text-blue-400 hover:text-blue-300 underline">
-              Open settings
-            </a>
+          {!isBrowserSource && (
+            <>
+              <br />
+              {ipcRenderer ? (
+                'Right-click to open settings.'
+              ) : (
+                <a href="#/settings" className="text-blue-400 hover:text-blue-300 underline">
+                  Open settings
+                </a>
+              )}
+            </>
           )}
         </p>
       </div>
@@ -114,8 +165,10 @@ export function OverlayView(): React.JSX.Element {
   ) : null
 
   return (
-    <div className="h-screen w-screen bg-black text-white flex items-end justify-center overflow-hidden relative select-none pb-4 px-4">
-      {!ipcRenderer && (
+    <div
+      className={`h-screen w-screen text-white flex items-end justify-center overflow-hidden relative select-none pb-4 px-4 ${isBrowserSource ? 'bg-transparent' : 'bg-black'}`}
+    >
+      {!ipcRenderer && !isBrowserSource && (
         <a
           href="#/settings"
           className="absolute top-2 right-2 z-20 text-neutral-600 hover:text-neutral-400 text-xs"

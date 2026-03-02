@@ -43,5 +43,7 @@ const defaultPresetId = 'default'
 
 export const defaultStoreSchema: StoreSchema = {
   activePresetId: defaultPresetId,
-  presets: [{ id: defaultPresetId, name: 'Unnamed preset', settings: defaultSettings }]
+  presets: [{ id: defaultPresetId, name: 'Unnamed preset', settings: defaultSettings }],
+  serverEnabled: false,
+  serverPort: 1727
 }

@@ -35,7 +35,9 @@ function migrateSettings(raw: any): AppSettings {
 export const store = new Store<StoreSchema>({
   defaults: {
     activePresetId: 'default',
-    presets: [{ id: 'default', name: 'Unnamed preset', settings: defaultSettings }]
+    presets: [{ id: 'default', name: 'Unnamed preset', settings: defaultSettings }],
+    serverEnabled: false,
+    serverPort: 1727
   }
 })
 
