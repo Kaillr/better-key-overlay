@@ -23,6 +23,7 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
     colorsRef.current = colors
   }, [colors])
 
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -111,18 +112,13 @@ export function PressureCanvas({ scrollRate, colors, fade }: PressureCanvasProps
     }
   }, [])
 
+  const maskStyle = fade.enabled && fade.height > 0
+    ? { WebkitMaskImage: `linear-gradient(to bottom, transparent, black ${fade.height}%)`, maskImage: `linear-gradient(to bottom, transparent, black ${fade.height}%)` }
+    : undefined
+
   return (
     <div className="relative w-full h-full">
-      <canvas ref={canvasRef} className="w-full h-full" />
-      {fade.enabled && fade.height > 0 && (
-        <div
-          className="absolute top-0 left-0 w-full pointer-events-none"
-          style={{
-            height: `${fade.height}%`,
-            background: 'linear-gradient(to bottom, black, transparent)'
-          }}
-        />
-      )}
+      <canvas ref={canvasRef} className="w-full h-full" style={maskStyle} />
     </div>
   )
 }

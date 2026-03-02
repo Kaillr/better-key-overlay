@@ -16,6 +16,8 @@ export function HexColorInput({ value, onChange }: HexColorInputProps) {
     let hex = v.trim()
     if (!hex.startsWith('#')) hex = '#' + hex
     if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+      onChange((hex + 'ff').toLowerCase())
+    } else if (/^#[0-9a-fA-F]{8}$/.test(hex)) {
       onChange(hex.toLowerCase())
     } else {
       setText(value)
@@ -26,8 +28,8 @@ export function HexColorInput({ value, onChange }: HexColorInputProps) {
     <div className="flex items-center gap-1">
       <input
         type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={value.slice(0, 7)}
+        onChange={(e) => onChange(e.target.value + (value.length >= 9 ? value.slice(7, 9) : 'ff'))}
         className="w-7 h-5 cursor-pointer border-0 bg-transparent"
       />
       <input

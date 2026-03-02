@@ -4,8 +4,8 @@ export const defaultSettings: AppSettings = {
   keys: [],
   scrollRate: 400,
   colors: {
-    activeColor: '#ffffff',
-    inactiveColor: '#ff0000',
+    activeColor: '#ffffffff',
+    inactiveColor: '#ff0000ff',
     gradient: false
   },
   showKps: false,
@@ -14,19 +14,19 @@ export const defaultSettings: AppSettings = {
   showVisualizer: true,
   keyStyle: {
     active: {
-      borderColor: ['#ffffff', '#ffffff'],
+      borderColor: ['#ffffffff', '#ffffffff'],
       borderColorGradient: false,
-      backgroundColor: ['#171717', '#404040'],
+      backgroundColor: ['#171717ff', '#404040ff'],
       backgroundColorGradient: true,
-      textColor: ['#ffffff', '#ffffff'],
+      textColor: ['#ffffffff', '#ffffffff'],
       textColorGradient: false
     },
     inactive: {
-      borderColor: ['#404040', '#404040'],
+      borderColor: ['#404040ff', '#404040ff'],
       borderColorGradient: false,
-      backgroundColor: ['#171717', '#404040'],
+      backgroundColor: ['#171717ff', '#404040ff'],
       backgroundColorGradient: true,
-      textColor: ['#ffffff', '#ffffff'],
+      textColor: ['#ffffffff', '#ffffffff'],
       textColorGradient: false
     },
     borderWidth: 6,

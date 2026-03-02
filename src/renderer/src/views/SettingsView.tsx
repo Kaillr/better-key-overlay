@@ -14,32 +14,61 @@ import type { AppSettings, Preset } from '../../../shared/types'
 const ipcRenderer = window.electron?.ipcRenderer
 const isElectron = !!ipcRenderer
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function hex8(v: any): string {
+  if (typeof v !== 'string') return '#000000ff'
+  if (v.length === 7) return v + 'ff'
+  return v
+}
+
 function migrateColors(colors: any): AppSettings['colors'] {
   return {
-    activeColor: colors.activeColor ?? colors.activeEndColor ?? defaultSettings.colors.activeColor,
-    inactiveColor:
-      colors.inactiveColor ?? colors.inactiveStartColor ?? defaultSettings.colors.inactiveColor,
+    activeColor: hex8(
+      colors.activeColor ?? colors.activeEndColor ?? defaultSettings.colors.activeColor
+    ),
+    inactiveColor: hex8(
+      colors.inactiveColor ?? colors.inactiveStartColor ?? defaultSettings.colors.inactiveColor
+    ),
     gradient: colors.gradient ?? false,
     ...(colors.gradient
       ? {
-          activeStartColor: colors.activeStartColor,
-          activeEndColor: colors.activeEndColor,
-          inactiveStartColor: colors.inactiveStartColor,
-          inactiveEndColor: colors.inactiveEndColor
+          activeStartColor: hex8(colors.activeStartColor),
+          activeEndColor: hex8(colors.activeEndColor),
+          inactiveStartColor: hex8(colors.inactiveStartColor),
+          inactiveEndColor: hex8(colors.inactiveEndColor)
         }
       : {})
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateKeyStyle(style: any): any {
+  if (!style) return defaultSettings.keyStyle
+  const migratePair = (pair: any): [string, string] => {
+    if (!Array.isArray(pair)) return ['#000000ff', '#000000ff']
+    return [hex8(pair[0]), hex8(pair[1])]
+  }
+  const migrateState = (s: any): any => ({
+    ...s,
+    borderColor: migratePair(s.borderColor),
+    backgroundColor: migratePair(s.backgroundColor),
+    textColor: migratePair(s.textColor)
+  })
+  return {
+    ...style,
+    active: style.active ? migrateState(style.active) : defaultSettings.keyStyle.active,
+    inactive: style.inactive ? migrateState(style.inactive) : defaultSettings.keyStyle.inactive
+  }
+}
+
 function migrateSettings(raw: any): AppSettings {
   return {
     ...defaultSettings,
     ...raw,
-    colors: raw.colors ? migrateColors(raw.colors) : defaultSettings.colors
+    colors: raw.colors ? migrateColors(raw.colors) : defaultSettings.colors,
+    keyStyle: migrateKeyStyle(raw.keyStyle)
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function loadBrowserPresets(): { presets: Preset[]; activePresetId: string } {
   try {
