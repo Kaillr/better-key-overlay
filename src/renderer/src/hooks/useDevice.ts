@@ -31,7 +31,12 @@ export function useDevice(
 
   useEffect(() => {
     if (!navigator.hid) return
-    const handler = (event: HIDConnectionEvent) => {
+    const onConnect = () => {
+      getDevices().then((devs) => {
+        for (const dev of devs) addDevice(dev)
+      })
+    }
+    const onDisconnectEvent = (event: HIDConnectionEvent) => {
       const disconnected = devices.find((d) => d.hidDevice === event.device)
       if (disconnected) {
         disconnected.stopListening()
@@ -39,9 +44,13 @@ export function useDevice(
         onDisconnect()
       }
     }
-    navigator.hid.addEventListener('disconnect', handler)
-    return () => navigator.hid.removeEventListener('disconnect', handler)
-  }, [devices, onDisconnect])
+    navigator.hid.addEventListener('connect', onConnect)
+    navigator.hid.addEventListener('disconnect', onDisconnectEvent)
+    return () => {
+      navigator.hid.removeEventListener('connect', onConnect)
+      navigator.hid.removeEventListener('disconnect', onDisconnectEvent)
+    }
+  }, [devices, addDevice, onDisconnect])
 
   const requestDev = useCallback(async () => {
     const dev = await requestDevice()
