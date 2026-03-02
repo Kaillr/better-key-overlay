@@ -1,3 +1,16 @@
+# [1.7.0](https://github.com/Kaillr/better-key-overlay/compare/v1.6.0...v1.7.0) (2026-03-02)
+
+
+### Bug Fixes
+
+* device not showing as connected in settings ([fa7ca62](https://github.com/Kaillr/better-key-overlay/commit/fa7ca62a120768a6e7f5a8dddaadb17861a458ce))
+* reconnect analog device when plugged in after app start ([ba1edce](https://github.com/Kaillr/better-key-overlay/commit/ba1edcec0b82d16db729a40920710fc0d677a721))
+
+
+### Features
+
+* capture unique HID reports in device diagnostics export ([2fab4cb](https://github.com/Kaillr/better-key-overlay/commit/2fab4cbd9435cd074603e9024092e67b9a36ffb6))
+
 # [1.6.0](https://github.com/Kaillr/better-key-overlay/compare/v1.5.0...v1.6.0) (2026-02-27)
 
 
