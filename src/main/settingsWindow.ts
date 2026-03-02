@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 
@@ -14,7 +14,7 @@ export function openSettingsWindow(): void {
     width: 750,
     height: 600,
     minWidth: 750,
-    minHeight: 400,
+    minHeight: 500,
     resizable: true,
     title: 'Settings',
     autoHideMenuBar: true,
@@ -30,6 +30,11 @@ export function openSettingsWindow(): void {
   } else {
     settingsWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: '/settings' })
   }
+
+  settingsWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
 
   settingsWindow.on('closed', () => {
     settingsWindow = null
