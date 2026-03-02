@@ -26,14 +26,16 @@ export async function getDevices(): Promise<AnalogDevice[]> {
 export async function listConnectedDeviceNames(): Promise<string[]> {
   if (!navigator.hid) return []
   const devices = await navigator.hid.getDevices()
-  const seen = new Set<string>()
+  const found = new Set<string>()
   const names: string[] = []
   for (const d of devices) {
     if (!d.productName) continue
     const key = `${d.vendorId}:${d.productId}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    if (analogsense.findProviderForDevice(d)) names.push(d.productName)
+    if (found.has(key)) continue
+    if (analogsense.findProviderForDevice(d)) {
+      found.add(key)
+      names.push(d.productName)
+    }
   }
   return names
 }
